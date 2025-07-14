@@ -5,6 +5,7 @@ import MainLayout from '../components/layout/MainLayout';
 import AccountAddPage from '../pages/Accounts/AccountAddPage';
 import AccountEditPage from '../pages/Accounts/AccountEditPage';
 import AccountListPage from '../pages/Accounts/AccountListPage';
+import LoginPage from '../pages/Auth/LoginPage';
 import CategoryGuideListPage from '../pages/Categories/CategoryGuideListPage';
 import CategoryPostListPage from '../pages/Categories/CategoryPostListPage';
 import CategoryProductListPage from '../pages/Categories/CategoryProductListPage';
@@ -34,7 +35,6 @@ const ReviewListPage = () => <Title level={3}>Quản lý đánh giá</Title>;
 const DiscountListPage = () => <Title level={3}>Quản lý mã giảm giá</Title>;
 const TransactionListPage = () => <Title level={3}>Quản lý giao dịch</Title>;
 const SettingsPage = () => <Title level={3}>Cài đặt chung</Title>;
-const LoginPage = () => <Title level={3}>Trang Đăng nhập</Title>;
 const NotFoundPage = () => <Title level={3}>404 - Trang không tồn tại</Title>;
 
 
