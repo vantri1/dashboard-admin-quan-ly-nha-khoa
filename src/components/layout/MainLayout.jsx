@@ -87,12 +87,14 @@ const findBreadcrumbItems = (path, menu) => {
 
 const MainLayout = () => {
     const isMobile = useMediaQuery('(max-width: 768px)');
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(true);
     const location = useLocation();
 
     useEffect(() => {
         if (isMobile) {
             setCollapsed(true);
+        } else {
+            setCollapsed(false);
         }
     }, [isMobile]);
 
