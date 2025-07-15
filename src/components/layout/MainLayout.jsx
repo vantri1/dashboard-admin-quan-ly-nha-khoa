@@ -8,25 +8,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 import { themeColors } from '../../configs/theme';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import AppHeader from './AppHeader';
 import { menuItems } from './MainMenu';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
-
-const useMediaQuery = (query) => {
-    const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
-
-    useEffect(() => {
-        const mediaQuery = window.matchMedia(query);
-        const handleChange = () => setMatches(mediaQuery.matches);
-
-        mediaQuery.addEventListener('change', handleChange);
-        return () => mediaQuery.removeEventListener('change', handleChange);
-    }, [query]);
-
-    return matches;
-};
 
 const findBreadcrumbItems = (path, menu) => {
     const items = [];

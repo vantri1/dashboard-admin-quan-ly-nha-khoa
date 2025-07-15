@@ -2,33 +2,52 @@
 
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { Button, Card, Checkbox, Form, Input, message, Typography } from 'antd';
-import React from 'react';
+import React, { useEffect, useState } from 'react'; // Giữ useState cho 'loading'
 import { useNavigate } from 'react-router-dom';
 
 import { themeColors } from '../../configs/theme';
+import { useAuth } from '../../contexts/AuthContext';
+import { loginAPI } from './api';
 
 const { Title, Text, Link } = Typography;
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const { login, isAuthenticated } = useAuth();
+    const [loading, setLoading] = useState(false); // Vẫn giữ state 'loading'
 
-    const onFinish = (values) => {
-        console.log('Login credentials:', values);
-        // --- LOGIC XÁC THỰC ---
-        // Trong thực tế, bạn sẽ gọi API ở đây để xác thực email và password.
-        // Ví dụ:
-        // if (email === 'admin@example.com' && password === '123456') {
-        //   message.success('Đăng nhập thành công!');
-        //   localStorage.setItem('authToken', 'your_jwt_token_here'); // Lưu token
-        //   navigate('/dashboard');
-        // } else {
-        //   message.error('Email hoặc mật khẩu không chính xác!');
-        // }
-        // -----------------------
+    useEffect(() => {
+        if (isAuthenticated) {
+            // Nếu người dùng đã xác thực thành công, chuyển hướng đến dashboard
+            // Điều này đảm bảo trạng thái đã cập nhật xong xuôi
+            navigate('/dashboard');
+        }
+    }, [isAuthenticated, navigate]);
 
-        // Giả lập đăng nhập thành công
-        message.success('Đăng nhập thành công!');
-        navigate('/dashboard');
+    const onFinish = async (values) => {
+        setLoading(true);
+
+        try {
+            // Gửi yêu cầu POST đến API đăng nhập bằng Axios
+            // SỬ DỤNG TRỰC TIẾP values.email VÀ values.password TỪ ĐỐI SỐ ONFINISH
+            const response = await loginAPI(values);
+
+            const { token, admin, message: msg } = response.data;
+
+            login(token, admin);
+
+        } catch (error) {
+            console.error('Login error:', error);
+            if (error.response) {
+                message.error(error.response.data.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+            } else if (error.request) {
+                message.error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
+            } else {
+                message.error('Có lỗi xảy ra trong quá trình đăng nhập.');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -36,7 +55,7 @@ const LoginPage = () => {
             className="flex items-center justify-center min-h-screen"
             style={{ backgroundColor: themeColors.contentBg }}
         >
-            <Card className="w-full max-w-md shadow-lg" bordered={false}>
+            <Card className="w-full max-w-md shadow-lg" variant="borderless"> {/* Đã sửa variant */}
                 <div className="text-center mb-8">
                     <Title level={2}>Chào mừng trở lại!</Title>
                     <Text type="secondary">Đăng nhập vào bảng điều khiển của bạn</Text>
@@ -54,14 +73,22 @@ const LoginPage = () => {
                             { type: 'email', message: 'Email không hợp lệ!' }
                         ]}
                     >
-                        <Input prefix={<MailOutlined />} placeholder="Email" />
+                        <Input
+                            prefix={<MailOutlined />}
+                            placeholder="Email"
+                        // KHÔNG DÙNG value={email} VÀ onChange={setEmail} NỮA
+                        />
                     </Form.Item>
 
                     <Form.Item
                         name="password"
                         rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
                     >
-                        <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
+                        <Input.Password
+                            prefix={<LockOutlined />}
+                            placeholder="Mật khẩu"
+                        // KHÔNG DÙNG value={password} VÀ onChange={setPassword} NỮA
+                        />
                     </Form.Item>
 
                     <Form.Item>
@@ -74,7 +101,7 @@ const LoginPage = () => {
                     </Form.Item>
 
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" className="w-full">
+                        <Button type="primary" htmlType="submit" className="w-full" loading={loading}>
                             Đăng nhập
                         </Button>
                     </Form.Item>

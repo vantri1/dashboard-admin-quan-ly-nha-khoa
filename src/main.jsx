@@ -6,6 +6,7 @@ import './index.css';
 import { ConfigProvider } from 'antd';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
 import { themeColors } from './configs/theme';
@@ -37,9 +38,7 @@ const antdTheme = {
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ConfigProvider theme={antdTheme}>
-      <App />
-    </ConfigProvider>
-  </React.StrictMode>
+  <ConfigProvider theme={antdTheme}>
+    <App />
+  </ConfigProvider>
 );

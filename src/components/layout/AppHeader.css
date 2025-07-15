@@ -1,0 +1,8 @@
+.header-dropdown-trigger.ant-btn-text:hover,
+.header-dropdown-trigger.ant-btn-text:focus,
+.header-dropdown-trigger.ant-btn-text:active {
+    background-color: transparent !important;
+    /* Loại bỏ màu nền khi hover, focus, active */
+    color: inherit !important;
+    /* Giữ nguyên màu chữ */
+}

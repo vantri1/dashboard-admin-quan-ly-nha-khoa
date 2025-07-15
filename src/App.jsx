@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 
 import { themeColors } from './configs/theme';
+import { AuthProvider } from './contexts/AuthContext';
 import { router } from './routes';
 import { lightenColor } from './utils/lightenColor';
 function App() {
@@ -15,7 +16,12 @@ function App() {
     document.documentElement.style.setProperty('--primary-scrollbar-hover-color', primaryScrollbarHover);
   }, []);
   return (
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+    // <AuthProvider>
+    //   <RouterProvider router={router} />
+    // </AuthProvider>
   )
 }
 

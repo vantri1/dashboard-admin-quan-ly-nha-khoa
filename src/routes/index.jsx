@@ -2,6 +2,7 @@ import { Typography } from 'antd';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import MainLayout from '../components/layout/MainLayout';
+import { useAuth } from '../contexts/AuthContext';
 import AccountAddPage from '../pages/Accounts/AccountAddPage';
 import AccountEditPage from '../pages/Accounts/AccountEditPage';
 import AccountListPage from '../pages/Accounts/AccountListPage';
@@ -15,6 +16,7 @@ import DashboardPage from '../pages/DashboardPage';
 import GuideAddPage from '../pages/Guides/GuideAddPage';
 import GuideEditPage from '../pages/Guides/GuideEditPage';
 import GuideListPage from '../pages/Guides/GuideListPage';
+import NotFoundPage from '../pages/NotFoundPage';
 import PostListPage from '../pages/Posts';
 import PostAddPage from '../pages/Posts/PostAddPage';
 import PostEditPage from '../pages/Posts/PostEditPage';
@@ -29,20 +31,34 @@ const { Title } = Typography;
 
 // --- Tự động import các trang từ thư mục pages ---
 // (Tạm thời chúng ta sẽ dùng placeholder cho các trang chưa tạo)
-const OrderListPage = () => <Title level={3}>Danh sách đơn hàng</Title>;
-const OrderDetailPage = () => <Title level={3}>Chi tiết đơn hàng</Title>;
-const ReviewListPage = () => <Title level={3}>Quản lý đánh giá</Title>;
-const DiscountListPage = () => <Title level={3}>Quản lý mã giảm giá</Title>;
-const TransactionListPage = () => <Title level={3}>Quản lý giao dịch</Title>;
-const SettingsPage = () => <Title level={3}>Cài đặt chung</Title>;
-const NotFoundPage = () => <Title level={3}>404 - Trang không tồn tại</Title>;
+// const OrderListPage = () => <Title level={3}>Danh sách đơn hàng</Title>;
+// const OrderDetailPage = () => <Title level={3}>Chi tiết đơn hàng</Title>;
+// const ReviewListPage = () => <Title level={3}>Quản lý đánh giá</Title>;
+// const DiscountListPage = () => <Title level={3}>Quản lý mã giảm giá</Title>;
+// const TransactionListPage = () => <Title level={3}>Quản lý giao dịch</Title>;
+// const SettingsPage = () => <Title level={3}>Cài đặt chung</Title>;
+// const NotFoundPage = () => <Title level={3}>404 - Trang không tồn tại</Title>;
 
+const ProtectedRoute = ({ children }) => {
+    // const { isAuthenticated } = useAuth(); // Lấy trạng thái xác thực từ contex
+    const isAuthenticated = true;
 
+    if (!isAuthenticated) {
+        // Nếu chưa xác thực, chuyển hướng đến trang đăng nhập
+        return <Navigate to="/login" replace />;
+    }
+
+    // Nếu đã xác thực, hiển thị các component con
+    return children;
+};
 export const router = createBrowserRouter([
     // --- Các Route sử dụng Layout Admin ---
     {
         path: '/',
-        element: <MainLayout />,
+        element:
+            <ProtectedRoute>
+                <MainLayout />
+            </ProtectedRoute>,
         children: [
             // Điều hướng từ "/" sang "/dashboard"
             { index: true, element: <Navigate to="/dashboard" replace /> },
@@ -61,22 +77,22 @@ export const router = createBrowserRouter([
             { path: 'categories/posts', element: <CategoryPostListPage /> },
             { path: 'categories/guides', element: <CategoryGuideListPage /> },
 
-            // Quản lý đơn hàng
-            { path: 'orders', element: <OrderListPage /> },
-            { path: 'orders/:orderId', element: <OrderDetailPage /> },
+            // // Quản lý đơn hàng
+            // { path: 'orders', element: <OrderListPage /> },
+            // { path: 'orders/:orderId', element: <OrderDetailPage /> },
 
             // Quản lý khách hàng
             { path: 'customers', element: <CustomerListPage /> },
             { path: 'customers/:customerId', element: <CustomerDetailPage /> },
 
-            // Quản lý đánh giá & bình luận
-            { path: 'reviews', element: <ReviewListPage /> },
+            // // Quản lý đánh giá & bình luận
+            // { path: 'reviews', element: <ReviewListPage /> },
 
-            // Quản lý Marketing
-            { path: 'discounts', element: <DiscountListPage /> },
+            // // Quản lý Marketing
+            // { path: 'discounts', element: <DiscountListPage /> },
 
-            // Tài chính
-            { path: 'transactions', element: <TransactionListPage /> },
+            // // Tài chính
+            // { path: 'transactions', element: <TransactionListPage /> },
 
             // Quản lý nội dung bài viết
             { path: 'blog/posts', element: <PostListPage /> },
@@ -94,7 +110,7 @@ export const router = createBrowserRouter([
 
 
             // Cài đặt hệ thống
-            { path: 'settings', element: <SettingsPage /> },
+            // { path: 'settings', element: <SettingsPage /> },
             { path: 'settings/site', element: <SiteSettingsPage /> },
 
             // Quản lý tài khoản quản trị

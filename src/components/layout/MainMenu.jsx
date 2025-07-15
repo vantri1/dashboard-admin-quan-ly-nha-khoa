@@ -31,14 +31,14 @@ export const menuItems = [
     { key: '/dashboard', icon: <BarChartOutlined />, label: 'Bảng điều khiển', isLink: true },
 
     { type: 'divider', },
-    { type: 'group', label: (<span style={styleLabelGroup}>KHÁCH HÀNG</span>) },
+    { key: 'group-customers', type: 'group', label: (<span style={styleLabelGroup}>KHÁCH HÀNG</span>) },
 
     // { key: '/orders', icon: <AppstoreOutlined />, label: 'Đơn hàng', isLink: true },
     // { key: '/transactions', icon: <DollarCircleOutlined />, label: 'Giao dịch', isLink: true },
     { key: '/customers', icon: <TeamOutlined />, label: 'Khách hàng', isLink: true },
 
     { type: 'divider' },
-    { type: 'group', label: (<span style={styleLabelGroup}>BẢNG GIÁ & NỘI DUNG</span>) },
+    { key: 'group-content-pricing', type: 'group', label: (<span style={styleLabelGroup}>BẢNG GIÁ & NỘI DUNG</span>) },
 
     // {
     //     key: 'sub_products',
@@ -82,7 +82,7 @@ export const menuItems = [
     },
 
     { type: 'divider' },
-    { type: 'group', label: (<span style={styleLabelGroup}>HỆ THỐNG</span>) },
+    { key: 'group-system', type: 'group', label: (<span style={styleLabelGroup}>HỆ THỐNG</span>) },
 
     // { key: '/support', icon: <QuestionCircleOutlined />, label: 'Hỗ trợ khách hàng', isLink: true },
     { key: '/reports', icon: <AreaChartOutlined />, label: 'Báo cáo', isLink: true },
