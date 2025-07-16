@@ -32,14 +32,14 @@ const LoginPage = () => {
             // SỬ DỤNG TRỰC TIẾP values.email VÀ values.password TỪ ĐỐI SỐ ONFINISH
             const response = await loginAPI(values);
 
-            const { token, admin, message: msg } = response.data;
+            const { token, admin, message: msg } = response;
 
             login(token, admin);
 
         } catch (error) {
             console.error('Login error:', error);
-            if (error.response) {
-                message.error(error.response.data.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+            if (error) {
+                message.error(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
             } else if (error.request) {
                 message.error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
             } else {

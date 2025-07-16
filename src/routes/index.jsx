@@ -40,8 +40,8 @@ const { Title } = Typography;
 // const NotFoundPage = () => <Title level={3}>404 - Trang không tồn tại</Title>;
 
 const ProtectedRoute = ({ children }) => {
-    // const { isAuthenticated } = useAuth(); // Lấy trạng thái xác thực từ contex
-    const isAuthenticated = true;
+    const { isAuthenticated } = useAuth(); // Lấy trạng thái xác thực từ contex
+    // const isAuthenticated = true;
 
     if (!isAuthenticated) {
         // Nếu chưa xác thực, chuyển hướng đến trang đăng nhập

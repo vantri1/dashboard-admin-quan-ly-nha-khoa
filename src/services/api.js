@@ -2,9 +2,7 @@
 
 import axios from 'axios';
 
-// Đặt URL API backend của bạn vào đây
-// Đảm bảo nó khớp với Virtual Host bạn đã cấu hình trong Laragon
-const API_BASE_URL = 'http://localhost:8008'; // THAY THẾ BẰNG URL BACKEND THỰC TẾ CỦA BẠN!
+const API_BASE_URL = 'http://localhost:8008';
 
 // Tạo một instance Axios
 const api = axios.create({
@@ -32,20 +30,37 @@ api.interceptors.request.use(
 // Thêm interceptor để xử lý lỗi phản hồi
 api.interceptors.response.use(
     (response) => {
-        return response;
+        // ================== SỬA LỖI TẠI ĐÂY ==================
+        // Với các request thành công (status 2xx), trả về thẳng `response.data`
+        // `response.data` chính là object mà PHP backend đã `json_encode`
+        return response.data;
+        // ======================================================
     },
     (error) => {
-        // Xử lý lỗi tập trung, ví dụ: nếu token hết hạn hoặc không hợp lệ (401 Unauthorized)
-        if (error.response && error.response.status === 401) {
-            // Có thể tự động đăng xuất người dùng ở đây
-            // Để làm được điều này, chúng ta cần truy cập vào logout function từ AuthContext.
-            // Điều này phức tạp hơn một chút với interceptor vì nó nằm ngoài React Component.
-            // Tạm thời, chúng ta sẽ chỉ hiển thị lỗi và để việc logout được trigger bởi component.
-            console.error("Unauthorized request, token might be invalid or expired.");
-            // message.error('Phiên làm việc đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.');
-            // window.location.href = '/login'; // Chuyển hướng thủ công (có thể gây lỗi React Router)
+        // Phần xử lý lỗi của bạn đã rất tốt, giữ nguyên và cải tiến một chút
+        let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại.';
+
+        if (error.response) {
+            // Lỗi từ server (status code không phải 2xx)
+            // Ưu tiên lấy trường `message` từ trong body của lỗi
+            if (error.response.data && error.response.data.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response.status === 401) {
+                errorMessage = 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
+                // Ở đây bạn có thể thêm logic để tự động đăng xuất
+                // localStorage.removeItem('authToken');
+                // window.location.href = '/login';
+            }
+        } else if (error.request) {
+            // Lỗi mạng hoặc không nhận được phản hồi
+            errorMessage = 'Không thể kết nối tới máy chủ.';
+        } else {
+            // Các lỗi khác
+            errorMessage = error.message;
         }
-        return Promise.reject(error);
+
+        // `Promise.reject` với một đối tượng Error mới chứa thông điệp đã được làm sạch.
+        return Promise.reject(new Error(errorMessage));
     }
 );
 
