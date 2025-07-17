@@ -1,34 +1,48 @@
 // src/pages/Posts/PostEditPage.jsx
-
 import { message, Typography } from 'antd';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import PostForm from '../../components/posts/PostForm';
+import { getPostById, updatePost } from '../../services/postServer';
 
 const { Title } = Typography;
 
-// --- DỮ LIỆU GIẢ LẬP ---
-const mockPosts = {
-    '1': { title: 'Hướng dẫn sử dụng React Hook', author: 'Admin', category: 'Hướng dẫn Lập trình', tags: ['react', 'hook'], status: 'Published', excerpt: 'Mô tả ngắn...', content: 'Nội dung chi tiết...', seo_title: 'Hướng dẫn sử dụng React Hook || Title', slug: 'huong-dan-su-dung-react-hook', meta_description: 'Mô tả: Hướng dẫn sử dụng React Hook', meta_keywords: ['lập trình', 'hướng dẫn'] },
-    '2': { title: 'Tin tức về phiên bản Vue 3.5', author: 'Editor', category: 'Tin tức Công nghệ', tags: ['vue', 'news'], status: 'Published', excerpt: 'Mô tả ngắn...', content: 'Nội dung chi tiết...', seo_title: 'Hướng dẫn sử dụng React Hook || Title', slug: 'huong-dan-su-dung-react-hook', meta_description: 'Mô tả: Hướng dẫn sử dụng React Hook' },
-    '3': { title: 'Top 5 mẹo tối ưu code CSS', author: 'Admin', category: 'Thủ thuật & Mẹo', tags: ['css', 'tips'], status: 'Draft', excerpt: 'Mô tả ngắn...', content: 'Nội dung chi tiết...', seo_title: 'Hướng dẫn sử dụng React Hook || Title', slug: 'huong-dan-su-dung-react-hook', meta_description: 'Mô tả: Hướng dẫn sử dụng React Hook' },
-};
-
-
 const PostEditPage = () => {
     const navigate = useNavigate();
-    const { postId } = useParams(); // Lấy postId từ URL
+    const { postId } = useParams(); // Get postId from URL
+    const [postData, setPostData] = useState(null); // Sẽ lưu trữ raw response, ví dụ {data: {...}, category_name: "...", creator_name: "..."}
+    const [loading, setLoading] = useState(true);
 
-    // Trong thực tế, bạn sẽ dùng postId để fetch dữ liệu từ API
-    const postData = mockPosts[postId];
+    useEffect(() => {
+        const fetchPost = async () => {
+            try {
+                const response = await getPostById(postId);
+                setPostData(response); // Lưu toàn bộ response.data
+            } catch (error) {
+                console.error('Failed to fetch post for editing:', error);
+                message.error('Không thể tải dữ liệu bài viết để chỉnh sửa.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPost();
+    }, [postId]);
 
-    const handleFinish = (values) => {
-        console.log('Updated post data:', values);
-        // Logic: Gửi dữ liệu cập nhật lên server
-        message.success('Cập nhật bài viết thành công!');
-        navigate('/blog/posts');
+    const handleFinish = async (values) => {
+        try {
+            const response = await updatePost(postId, values);
+            message.success(response.message || 'Cập nhật bài viết thành công!');
+            navigate('/blog/posts');
+        } catch (error) {
+            console.error('Failed to update post:', error);
+            message.error('Không thể cập nhật bài viết: ', error); // Error message handled by apiService interceptor
+        }
     };
+
+    if (loading) {
+        return <Title level={2}>Đang tải bài viết...</Title>;
+    }
 
     if (!postData) {
         return <Title level={2}>Không tìm thấy bài viết!</Title>;
@@ -36,7 +50,8 @@ const PostEditPage = () => {
 
     return (
         <>
-            <Title level={3} className='mb-4'>Chỉnh sửa Bài viết: {postData.title}</Title>
+            <Title level={3} className='mb-4'>Chỉnh sửa Bài viết: {postData.data.title}</Title>
+            {/* Truyền toàn bộ postData (bao gồm 'data' và các trường khác như 'category_name') */}
             <PostForm onFinish={handleFinish} initialValues={postData} />
         </>
     );

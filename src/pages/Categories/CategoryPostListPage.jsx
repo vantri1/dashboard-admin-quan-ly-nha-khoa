@@ -41,11 +41,11 @@ const CategoryPostListPage = () => {
                 type: 'post', // Luôn lấy danh mục bài viết
             };
             const result = await getCategories(apiParams);
-            setCategories(result.categories);
+            setCategories(result.data);
             setPagination({
-                current: result.page,
-                pageSize: result.limit,
-                total: result.total,
+                current: result.pagination.page,
+                pageSize: result.pagination.limit,
+                total: result.pagination.total_records,
             });
         } catch (error) {
             message.error(`Lỗi tải danh mục: ${error.message}`);

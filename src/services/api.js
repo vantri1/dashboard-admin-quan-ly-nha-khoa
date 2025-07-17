@@ -62,6 +62,40 @@ api.interceptors.response.use(
         // `Promise.reject` với một đối tượng Error mới chứa thông điệp đã được làm sạch.
         return Promise.reject(new Error(errorMessage));
     }
+    // (error) => {
+    // if (error.response) {
+    //     const { status, data } = error.response;
+    //     let errorMessage = data.message || 'Có lỗi xảy ra từ server.';
+
+    //     switch (status) {
+    //         case 400:
+    //             message.error(`Lỗi dữ liệu: ${errorMessage}`);
+    //             break;
+    //         case 401:
+    //             message.error(`Không xác thực: ${errorMessage}`);
+    //             // Có thể chuyển hướng về trang đăng nhập nếu token hết hạn
+    //             // window.location.href = '/login';
+    //             break;
+    //         case 403:
+    //             message.error(`Không có quyền: ${errorMessage}`);
+    //             break;
+    //         case 404:
+    //             message.error(`Không tìm thấy tài nguyên: ${errorMessage}`);
+    //             break;
+    //         case 409:
+    //             message.error(`Xung đột dữ liệu: ${errorMessage}`);
+    //             break;
+    //         case 500:
+    //             message.error(`Lỗi server nội bộ: ${errorMessage}`);
+    //             break;
+    //         default:
+    //             message.error(`Lỗi: ${errorMessage} (Mã: ${status})`);
+    //     }
+    // } else if (error.request) {
+    //     message.error('Không có phản hồi từ server. Vui lòng kiểm tra kết nối mạng.');
+    // } else {
+    //     message.error(`Lỗi yêu cầu: ${error.message}`);
+    // }
 );
 
 export default api;
