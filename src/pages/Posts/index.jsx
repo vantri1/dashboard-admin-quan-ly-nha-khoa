@@ -1,5 +1,5 @@
 // src/pages/Posts/PostListPage.jsx
-import { DeleteOutlined, EditOutlined, ExclamationCircleFilled, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, ExclamationCircleFilled, PlusOutlined } from '@ant-design/icons';
 import { Alert, Avatar, Button, Input, message, Modal, Popconfirm, Space, Table, Tag, Typography } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -15,7 +15,7 @@ const PostListPage = () => {
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current: 1,
-        pageSize: 10,
+        pageSize: 4,
         total: 0,
     });
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -28,6 +28,7 @@ const PostListPage = () => {
             const response = await getPosts({
                 page,
                 limit: pageSize,
+                post_type: 'post',
                 search_term: search,
                 sort_by: sortBy,
                 sort_order: sortOrder,
@@ -114,7 +115,12 @@ const PostListPage = () => {
     const hasSelected = selectedRowKeys.length > 0;
 
     const columns = [
-        { title: 'ID', dataIndex: 'id', key: 'id', render: (id) => <Text strong>#{id}</Text>, sorter: true },
+        {
+            title: 'ID', dataIndex: 'id', key: 'id',
+            fixed: 'left',
+            width: 80,
+            render: (id) => <Text strong>#{id}</Text>, sorter: true
+        },
         {
             title: 'Bài viết',
             dataIndex: 'title',
@@ -128,6 +134,7 @@ const PostListPage = () => {
             sorter: true
         },
         { title: 'Tác giả', dataIndex: 'creator_name', key: 'creator_name', sorter: true },
+        { title: 'Người sửa gần nhất', dataIndex: 'updater_name', key: 'updater_name', sorter: true },
         { title: 'Danh mục', dataIndex: 'category_name', key: 'category_name', render: (cat) => <Tag color="cyan">{cat}</Tag> },
         {
             title: 'Trạng thái',
@@ -141,8 +148,78 @@ const PostListPage = () => {
             sorter: true
         },
         {
+            title: 'Ngày xuất bản',
+            dataIndex: 'published_at',
+            key: 'published_at',
+            width: 180,
+            sorter: true,
+            render: (text) => text ? new Date(text).toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-',
+        },
+        {
+            title: 'Nổi bật',
+            dataIndex: 'is_featured',
+            key: 'is_featured',
+            width: 120,
+            render: (is_featured) => (
+                <Tag color={is_featured === 1 ? 'error' : 'default'}>
+                    {is_featured === 1 ? 'Nổi bật' : 'Không'}
+                </Tag>
+            ),
+            sorter: true
+        },
+        {
+            title: 'Lượt xem',
+            dataIndex: 'view_count',
+            key: 'view_count',
+            width: 120,
+            render: (view_count) => (
+                <div>
+                    {view_count}
+                </div>
+            ),
+            sorter: true
+        },
+        {
+            title: 'Ngày tạo',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            width: 180,
+            sorter: true,
+            // Định dạng lại ngày tháng cho dễ đọc, bao gồm cả giờ và phút
+            render: (text) => text ? new Date(text).toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-',
+        },
+
+        {
+            title: 'Ngày sửa gần nhất',
+            dataIndex: 'updated_at',
+            key: 'updated_at',
+            width: 180,
+            sorter: true,
+            render: (text) => text ? new Date(text).toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-',
+        },
+        {
             title: 'Hành Động',
             key: 'action',
+            fixed: 'right',
+            width: 120,
             render: (_, record) => (
                 <Space size="middle">
                     <Link to={`/blog/posts/edit/${record.id}`}>
@@ -165,11 +242,12 @@ const PostListPage = () => {
         <div className="space-y-4">
             <Title level={3}>Danh sách Bài viết</Title>
             <div className="flex justify-between items-center">
-                <Input
-                    prefix={<SearchOutlined />}
+                <Input.Search
                     placeholder="Tìm theo tiêu đề bài viết..."
-                    onChange={(e) => handleSearch(e.target.value)}
+                    onSearch={handleSearch}
+                    enterButton
                     className="w-full max-w-xs"
+                    allowClear
                 />
                 <Link to="/blog/posts/add">
                     <Button type="primary" icon={<PlusOutlined />}>Thêm bài viết mới</Button>
@@ -198,7 +276,7 @@ const PostListPage = () => {
                 loading={loading}
                 onChange={handleTableChange}
                 bordered
-                scroll={{ x: 1000 }} // Đảm bảo bảng có thể cuộn ngang nếu nhiều cột
+                scroll={{ x: 2000 }} // Đảm bảo bảng có thể cuộn ngang nếu nhiều cột
                 rowKey="id" // Quan trọng: sử dụng 'id' thực tế từ API làm rowKey
             />
         </div>

@@ -1,13 +1,13 @@
 // src/components/posts/PostForm.jsx
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Divider, Form, Input, message, Row, Select, Space, Typography, Upload } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Button, Card, Col, DatePicker, Divider, Form, Input, message, Row, Select, Space, Typography, Upload } from 'antd';
+import dayjs from 'dayjs'; // Cần import dayjs
+import { useEffect, useState } from 'react';
 
 import { IMAGE_URL } from '../../constants/imageUrl'; // Đảm bảo import này đúng
 import { addCategory, getCategories } from '../../services/categoryService';
 import { uploadFileService } from '../../services/uploadFileService';
 import CategoryForm from '../categories/CategoryForm';
-
 const { TextArea } = Input;
 const { Option } = Select;
 const { Text, Paragraph } = Typography;
@@ -39,7 +39,13 @@ const PostForm = ({ onFinish, initialValues }) => {
         const fetchCategories = async () => {
             setLoadingCategories(true);
             try {
-                const response = await getCategories();
+                const apiParams = {
+                    limit: 100000000000,
+                    sort_by: 'id',
+                    sort_order: 'desc',
+                    type: 'post',
+                };
+                const response = await getCategories(apiParams);
                 const activeCategories = response.data.filter(cat => !cat.deleted_at);
                 setCategories(activeCategories);
             } catch (error) {
@@ -77,7 +83,6 @@ const PostForm = ({ onFinish, initialValues }) => {
             form.resetFields();
             form.setFieldsValue({
                 status: 'draft',
-                post_type: 'post',
                 is_featured: 0,
             });
             setFileList([]);
@@ -86,15 +91,19 @@ const PostForm = ({ onFinish, initialValues }) => {
 
     const handleAddCategory = async (values) => {
         try {
-            const response = await addCategory(values);
-            const newCategory = response.data.data;
-            setCategories(prev => [...prev, { id: newCategory.id, name: newCategory.name }]);
+            const dataToSend = {
+                ...values,
+                category_type: 'post'
+            };
+            const response = await addCategory(dataToSend);
+            const newCategory = response;
+            setCategories(prev => [...prev, { id: newCategory.id, name: values.name }]);
+
+            message.success(`Đã thêm danh mục "${values.name} ${newCategory.message}"`);
             form.setFieldsValue({ category_id: newCategory.id });
-            message.success(`Đã thêm danh mục "${newCategory.name}"`);
             setIsCategoryModalVisible(false);
         } catch (error) {
-            console.error('Failed to add category:', error);
-            message.error('Thêm danh mục thất bại. Vui lòng thử lại.');
+            message.error(`Thêm danh mục thất bại: ${error.message}`);
         }
     };
 
@@ -136,6 +145,7 @@ const PostForm = ({ onFinish, initialValues }) => {
             const finalValues = {
                 ...values,
                 featured_image_url: finalImageUrl,
+                post_type: 'post',
                 admin_id: 1,
             };
 
@@ -204,21 +214,34 @@ const PostForm = ({ onFinish, initialValues }) => {
                                     <Option value="pending_review">Chờ duyệt</Option>
                                 </Select>
                             </Form.Item>
-                            <Form.Item name="post_type" label="Loại bài viết">
+                            {/* <Form.Item name="post_type" label="Loại bài viết">
                                 <Select>
                                     <Option value="post">Bài viết thường</Option>
                                     <Option value="guide">Bài viết hướng dẫn</Option>
                                 </Select>
-                            </Form.Item>
+                            </Form.Item> */}
                             <Form.Item name="is_featured" label="Nổi bật?">
                                 <Select>
                                     <Option value={1}>Có</Option>
                                     <Option value={0}>Không</Option>
                                 </Select>
                             </Form.Item>
-                            <Form.Item label="Tác giả">
-                                <Input value={initialValues?.data?.creator_name || '...'} disabled />
-                            </Form.Item>
+                            {initialValues?.data && (
+                                <>
+                                    <Form.Item label="Tác giả">
+                                        <Input value={initialValues?.data?.creator_name || '...'} disabled />
+                                    </Form.Item>
+                                    <Form.Item label="Ngày tạo">
+                                        <DatePicker
+                                            // Chuyển đổi chuỗi ngày tháng sang đối tượng dayjs
+                                            value={initialValues?.data?.created_at ? dayjs(initialValues.data.created_at) : null}
+                                            format="DD/MM/YYYY HH:mm:ss"
+                                            style={{ width: '100%' }}
+                                            disabled
+                                        />
+                                    </Form.Item>
+                                </>
+                            )}
                         </Card>
                         <Card title="Danh mục" bordered={false} className="shadow-sm">
                             <Form.Item name="category_id" label="Danh mục" rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}>

@@ -25,37 +25,26 @@ import {
     Row,
     Segmented,
     Space,
+    Spin,
     Switch,
     Table,
     Tag,
     Typography,
 } from 'antd';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { createPricingPackage, deletePricingPackage, getPricingPackages, updatePricingPackage } from '../../services/pricingService';
+
+
 
 const { Title, Text, Paragraph } = Typography;
 const { confirm } = Modal;
 
-// --- DỮ LIỆU ĐÃ ĐƯỢC CẬP NHẬT VỚI GÓI "FREE TRIAL" ---
-const initialPackages = [
-    {
-        id: 1,
-        name: 'FREE TRIAL',
-        price: 0,
-        description: 'Trải nghiệm đầy đủ các tính năng nổi bật trong vòng 7 ngày',
-        features: ['Quản lý lịch hẹn', 'Quản lý bệnh nhân', 'Báo cáo cơ bản', 'Hỗ trợ qua Email'],
-        isFeatured: false,
-        isActive: true
-    },
-    { id: 2, name: 'MINI', price: 300000, description: 'Gói cơ bản cho phòng khám nhỏ', features: ['Quản lý lịch hẹn', 'Quản lý bệnh nhân', 'Quản lý lịch sử bệnh nhân'], isFeatured: false, isActive: true },
-    { id: 3, name: 'STANDARD', price: 400000, description: 'Gói cho phòng khám vừa', features: ['Mọi thứ ở gói MINI', 'Tích hợp module CSKH', 'SMS Brandname'], isFeatured: true, isActive: true },
-    { id: 4, name: 'PRO', price: 600000, description: 'Gói cho phòng khám lớn', features: ['Mọi thứ ở gói STANDARD', 'Tích hợp Quản lý kho', 'Tích hợp tổng đài Call'], isFeatured: false, isActive: false },
-];
-
-// --- COMPONENT CON: GIAO DIỆN THẺ ---
+// --- COMPONENT CON: GIAO DIỆN THẺ (Không đổi) ---
 const PricingCard = ({ pkg, onEdit, onDelete }) => (
     <Card
         hoverable
-        className={`h-full shadow-lg ${!pkg.isActive && 'grayscale opacity-60'}`}
+        className={` h-full shadow-lg pt-5 ${!pkg.is_active && 'grayscale opacity-60'}`} // API trả về is_active
         actions={[
             <Button type="text" key="edit" icon={<EditOutlined />} onClick={() => onEdit(pkg)}>Sửa</Button>,
             <Popconfirm key="delete" title="Bạn có chắc muốn xóa gói này?" onConfirm={() => onDelete(pkg.id)}>
@@ -63,18 +52,19 @@ const PricingCard = ({ pkg, onEdit, onDelete }) => (
             </Popconfirm>
         ]}
     >
-        {pkg.isFeatured && <Tag color="gold" className="absolute top-4 right-[-1px] rounded-l-md rounded-r-none">Nổi bật</Tag>}
-        {pkg.id === 0 && <Tag color="success" className="absolute top-4 right-[-1px] rounded-l-md rounded-r-none">Dùng thử</Tag>}
-        {!pkg.isActive && <Tag color="default" className="absolute top-4 left-[-1px] rounded-r-md rounded-l-none">Đang ẩn</Tag>}
+        {!!pkg.is_featured && <Tag color="gold" className="absolute top-4 right-[-1px] rounded-l-md rounded-r-none">Nổi bật</Tag>}
+        {pkg.name === 'FREE TRIAL' && <Tag color="success" className="absolute top-4 right-[-1px] rounded-l-md rounded-r-none">Dùng thử</Tag>}
+        {!pkg.is_active && <Tag color="default" className="absolute top-4 left-[-1px] rounded-r-md rounded-l-none">Đang ẩn</Tag>}
+
         <div className="text-center">
             <Title level={3} className="uppercase">{pkg.name}</Title>
             <Paragraph type="secondary">{pkg.description}</Paragraph>
             <div className="my-4">
-                {pkg.price === 0 ? (
+                {parseFloat(pkg.price_monthly) === 0 ? ( // API trả về price_monthly
                     <Text strong style={{ fontSize: '2.5rem', color: '#52c41a' }}>Miễn phí</Text>
                 ) : (
                     <>
-                        <Text strong style={{ fontSize: '2.5rem', color: '#1677ff' }}>{pkg.price.toLocaleString('vi-VN')}</Text>
+                        <Text strong style={{ fontSize: '2.5rem', color: '#1677ff' }}>{parseFloat(pkg.price_monthly).toLocaleString('vi-VN')}</Text>
                         <Text type="secondary"> đ/tháng</Text>
                     </>
                 )}
@@ -91,16 +81,43 @@ const PricingCard = ({ pkg, onEdit, onDelete }) => (
 
 const PricingListPage = () => {
     const [viewMode, setViewMode] = useState('card');
-    const [packages, setPackages] = useState(initialPackages);
+    const [packages, setPackages] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingPackage, setEditingPackage] = useState(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [form] = Form.useForm();
 
+    // Hàm gọi API để lấy dữ liệu
+    const fetchPackages = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await getPricingPackages(); // Lấy tất cả, không phân trang
+            setPackages(response.data);
+        } catch (error) {
+            message.error(error.message || 'Có lỗi xảy ra, không thể tải dữ liệu.');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchPackages();
+    }, [fetchPackages]);
+
     const showModal = (pkg = null) => {
         setEditingPackage(pkg);
-        const formValues = pkg ? { ...pkg, features: pkg.features.join('\n') } : { isActive: true, price: 0 };
-        form.setFieldsValue(formValues);
+        if (pkg) {
+            // API trả về `price_monthly`, form dùng `price`
+            const formValues = {
+                ...pkg,
+                price: parseFloat(pkg.price_monthly),
+                features: pkg.features.join('\n')
+            };
+            form.setFieldsValue(formValues);
+        } else {
+            form.setFieldsValue({ is_active: true, is_featured: false, price: 0 });
+        }
         setIsModalVisible(true);
     };
 
@@ -110,22 +127,50 @@ const PricingListPage = () => {
         form.resetFields();
     };
 
-    const handleFinish = (values) => {
+    const handleFinish = async (values) => {
+        // Chuyển đổi features từ string thành array
         const finalValues = { ...values, features: values.features.split('\n').filter(Boolean) };
-        if (editingPackage) {
-            setPackages(packages.map(p => (p.id === editingPackage.id ? { ...p, ...finalValues } : p)));
-            message.success('Cập nhật gói giá thành công!');
-        } else {
-            const newPackage = { id: Date.now(), ...finalValues };
-            setPackages([newPackage, ...packages]);
-            message.success('Thêm gói giá mới thành công!');
+        setLoading(true);
+        try {
+            if (editingPackage) {
+                await updatePricingPackage(editingPackage.id, finalValues);
+                message.success('Cập nhật gói giá thành công!');
+            } else {
+                await createPricingPackage(finalValues);
+                message.success('Thêm gói giá mới thành công!');
+            }
+            await fetchPackages(); // Tải lại dữ liệu sau khi thành công
+            handleCancel();
+        } catch (error) {
+            message.error(error.message || 'Thao tác thất bại.');
+        } finally {
+            setLoading(false);
         }
-        handleCancel();
     };
 
-    const handleDelete = (id) => {
-        setPackages(packages.filter(p => p.id !== id));
-        message.success('Đã xóa gói giá!');
+    const handleDelete = async (id) => {
+        try {
+            await deletePricingPackage(id);
+            message.success('Đã xóa gói giá!');
+            await fetchPackages(); // Tải lại dữ liệu
+        } catch (error) {
+            message.error(error.message || 'Xóa thất bại.');
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        setLoading(true);
+        try {
+            // Thực hiện xóa song song để tối ưu hiệu suất
+            await Promise.all(selectedRowKeys.map(id => deletePricingPackage(id)));
+            message.success(`Đã xóa ${selectedRowKeys.length} gói giá.`);
+            setSelectedRowKeys([]);
+            await fetchPackages(); // Tải lại dữ liệu
+        } catch (error) {
+            message.error(error.message || `Có lỗi khi xóa các gói giá.`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const showBulkDeleteConfirm = () => {
@@ -133,11 +178,7 @@ const PricingListPage = () => {
             title: `Bạn có chắc muốn xóa ${selectedRowKeys.length} mục đã chọn?`,
             icon: <ExclamationCircleFilled />,
             okText: 'Xác nhận xóa', okType: 'danger', cancelText: 'Hủy',
-            onOk() {
-                setPackages(packages.filter(p => !selectedRowKeys.includes(p.id)));
-                setSelectedRowKeys([]);
-                message.success(`Đã xóa ${selectedRowKeys.length} gói giá.`);
-            },
+            onOk: handleBulkDelete,
         });
     };
 
@@ -149,16 +190,15 @@ const PricingListPage = () => {
     const hasSelected = selectedRowKeys.length > 0;
 
     const tableColumns = [
-        { title: 'ID', dataIndex: 'id', key: 'id', sorter: (a, b) => a.id - b.id, defaultSortOrder: 'descend' },
-        { title: 'Tên gói', dataIndex: 'name', key: 'name', render: (text, record) => <Text strong>{text} {record.id === 0 ? <Tag color="success">Dùng thử</Tag> : (record.isFeatured && <Tag color="gold">Nổi bật</Tag>)}</Text> },
-        { title: 'Giá (VNĐ/tháng)', dataIndex: 'price', key: 'price', render: (price) => (price === 0 ? <Text strong color="green">Miễn phí</Text> : price.toLocaleString('vi-VN')), sorter: (a, b) => a.price - b.price },
-        { title: 'Trạng thái', dataIndex: 'isActive', key: 'isActive', render: (isActive) => <Tag color={isActive ? 'success' : 'default'}>{isActive ? 'Hoạt động' : 'Đang ẩn'}</Tag> },
+        { title: 'Tên gói', dataIndex: 'name', key: 'name', render: (text, record) => <Text strong>{text} {record.name === 'FREE TRIAL' ? <Tag color="success">Dùng thử</Tag> : (!!record.is_featured && <Tag color="gold">Nổi bật</Tag>)}</Text> },
+        { title: 'Giá (VNĐ/tháng)', dataIndex: 'price_monthly', key: 'price_monthly', render: (price_monthly) => (parseFloat(price_monthly) === 0 ? <Text strong color="green">Miễn phí</Text> : parseFloat(price_monthly).toLocaleString('vi-VN')), sorter: (a, b) => a.price_monthly - b.price_monthly },
+        { title: 'Trạng thái', dataIndex: 'is_active', key: 'is_active', render: (isActive) => <Tag color={isActive ? 'success' : 'default'}>{isActive ? 'Hoạt động' : 'Đang ẩn'}</Tag> },
         {
-            title: 'Hành động', key: 'action',
+            title: 'Hành động', key: 'action', fixed: 'right',
             render: (_, record) => (
                 <Space>
                     <Button icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
-                    {record.id !== 0 && ( // Không cho xóa gói Dùng thử
+                    {record.name !== 'FREE TRIAL' && (
                         <Popconfirm title="Bạn có chắc muốn xóa gói này?" onConfirm={() => handleDelete(record.id)}>
                             <Button icon={<DeleteOutlined />} danger />
                         </Popconfirm>
@@ -169,61 +209,63 @@ const PricingListPage = () => {
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <Title level={3} className="m-0">Quản lý Bảng giá</Title>
-                <Space>
-                    <Segmented options={[{ value: 'card', icon: <AppstoreOutlined /> }, { value: 'table', icon: <UnorderedListOutlined /> }]} value={viewMode} onChange={setViewMode} />
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>Thêm gói giá mới</Button>
-                </Space>
-            </div>
+        <Spin spinning={loading} tip="Đang tải...">
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <Title level={3} className="m-0">Quản lý Bảng giá</Title>
+                    <Space>
+                        <Segmented options={[{ value: 'card', icon: <AppstoreOutlined /> }, { value: 'table', icon: <UnorderedListOutlined /> }]} value={viewMode} onChange={setViewMode} />
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>Thêm gói giá mới</Button>
+                    </Space>
+                </div>
 
-            {viewMode === 'table' && hasSelected && (
-                <Alert
-                    message={<Space><Text strong>Đã chọn {selectedRowKeys.length} mục</Text><Button type="link" danger onClick={showBulkDeleteConfirm}>Xóa tất cả</Button></Space>}
-                    type="info" showIcon
-                />
-            )}
+                {viewMode === 'table' && hasSelected && (
+                    <Alert
+                        message={<Space><Text strong>Đã chọn {selectedRowKeys.length} mục</Text><Button type="link" danger onClick={showBulkDeleteConfirm}>Xóa tất cả</Button></Space>}
+                        type="info" showIcon
+                    />
+                )}
 
-            {viewMode === 'card' ? (
-                <Row gutter={[24, 24]}>
-                    {packages.map(pkg => <Col xs={24} md={12} lg={8} key={pkg.id}><PricingCard pkg={pkg} onEdit={showModal} onDelete={handleDelete} /></Col>)}
-                </Row>
-            ) : (
-                <Card>
-                    <Table
-                        rowSelection={rowSelection}
-                        columns={tableColumns}
-                        dataSource={packages.filter(p => p.id !== 0)}
-                        rowKey="id"
-                        scroll={{ x: 1000 }}
-                        bordered />
-                </Card>
-            )}
-
-            <Modal title={editingPackage ? 'Chỉnh sửa Gói giá' : 'Thêm Gói giá mới'} open={isModalVisible} onCancel={handleCancel} footer={null} destroyOnClose>
-                <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-6">
-                    <Form.Item name="name" label="Tên gói" rules={[{ required: true }]}><Input /></Form.Item>
-                    <Form.Item name="price" label="Giá (VNĐ/tháng)" rules={[{ required: true }]}>
-                        <InputNumber className="w-full" formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} parser={(value) => value.replace(/\$\s?|(,*)/g, '')} />
-                    </Form.Item>
-                    <Form.Item name="description" label="Mô tả ngắn"><Input.TextArea rows={2} /></Form.Item>
-                    <Form.Item name="features" label="Danh sách tính năng (mỗi tính năng một dòng)" rules={[{ required: true }]}>
-                        <Input.TextArea rows={5} />
-                    </Form.Item>
-                    <Row justify="space-between">
-                        <Form.Item name="isFeatured" label="Gói nổi bật?" valuePropName="checked"><Switch /></Form.Item>
-                        <Form.Item name="isActive" label="Hiển thị gói này?" valuePropName="checked"><Switch /></Form.Item>
+                {viewMode === 'card' ? (
+                    <Row gutter={[24, 24]}>
+                        {packages.map(pkg => <Col xs={24} md={12} lg={8} key={pkg.id}><PricingCard pkg={pkg} onEdit={showModal} onDelete={handleDelete} /></Col>)}
                     </Row>
-                    <Form.Item className="text-right mb-0">
-                        <Space>
-                            <Button onClick={handleCancel}>Hủy</Button>
-                            <Button type="primary" htmlType="submit">Lưu</Button>
-                        </Space>
-                    </Form.Item>
-                </Form>
-            </Modal>
-        </div>
+                ) : (
+                    <Card>
+                        <Table
+                            rowSelection={rowSelection}
+                            columns={tableColumns}
+                            dataSource={packages.filter(p => p.name !== 'FREE TRIAL')}
+                            rowKey="id"
+                            scroll={{ x: 800 }}
+                            bordered />
+                    </Card>
+                )}
+
+                <Modal title={editingPackage ? 'Chỉnh sửa Gói giá' : 'Thêm Gói giá mới'} open={isModalVisible} onCancel={handleCancel} footer={null} destroyOnClose>
+                    <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-6">
+                        <Form.Item name="name" label="Tên gói" rules={[{ required: true, message: 'Vui lòng nhập tên gói!' }]}><Input /></Form.Item>
+                        <Form.Item name="price_monthly" label="Giá (VNĐ/tháng)" rules={[{ required: true, message: 'Vui lòng nhập giá!' }]}>
+                            <InputNumber className="w-full" formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} parser={(value) => value.replace(/\$\s?|(,*)/g, '')} />
+                        </Form.Item>
+                        <Form.Item name="description" label="Mô tả ngắn"><Input.TextArea rows={2} /></Form.Item>
+                        <Form.Item name="features" label="Danh sách tính năng (mỗi tính năng một dòng)" rules={[{ required: true, message: 'Vui lòng nhập các tính năng!' }]}>
+                            <Input.TextArea rows={5} />
+                        </Form.Item>
+                        <Row justify="space-between">
+                            <Form.Item name="is_featured" label="Gói nổi bật?" valuePropName="checked"><Switch /></Form.Item>
+                            <Form.Item name="is_active" label="Hiển thị gói này?" valuePropName="checked"><Switch /></Form.Item>
+                        </Row>
+                        <Form.Item className="text-right mb-0">
+                            <Space>
+                                <Button onClick={handleCancel}>Hủy</Button>
+                                <Button type="primary" htmlType="submit" loading={loading}>Lưu</Button>
+                            </Space>
+                        </Form.Item>
+                    </Form>
+                </Modal>
+            </div>
+        </Spin>
     );
 };
 

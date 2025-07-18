@@ -78,7 +78,7 @@ const AppHeader = ({ collapsed, setCollapsed, breadcrumbs }) => {
                 backgroundColor: themeColors.headerBg,
                 position: 'sticky',
                 top: 0,
-                zIndex: 1,
+                zIndex: 10,
                 width: '100%',
                 // Thêm một đường viền mỏng hoặc bóng mờ để tách biệt header
                 boxShadow: '0 1px 4px rgba(0, 21, 41, 0.08)',
