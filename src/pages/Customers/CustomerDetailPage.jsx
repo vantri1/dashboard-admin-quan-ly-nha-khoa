@@ -1,19 +1,27 @@
 // src/pages/Customers/CustomerDetailPage.jsx
 
-import { CheckCircleOutlined, ClockCircleOutlined, MailOutlined, MinusCircleOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, ClockCircleOutlined, MinusCircleOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Card, Col, Descriptions, Row, Space, Spin, Tag, Timeline, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-const { Title, Text } = Typography;
-
-// --- DỮ LIỆU GIẢ LẬP ---
-// Trong dự án thực tế, bạn sẽ không cần dòng này mà sẽ fetch từ API
-const allCustomers = [
-    { id: 'KH001', name: 'Phòng khám Răng-Hàm-Mặt Sài Gòn', phone: '0912345678', email: 'pk.saigon@email.com', status: 'Active', plan: 'Nâng cao', registeredAt: '2025-07-20', trialEndDate: '2025-07-27', avatar: 'https://cdn-icons-png.flaticon.com/512/33/33777.png' },
-    { id: 'KH002', name: 'Nha khoa Quốc tế Á Âu', phone: '0987654321', email: 'nk.aau@email.com', status: 'Active', plan: 'Cơ bản', registeredAt: '2025-07-18', trialEndDate: '2025-07-25', avatar: 'https://cdn-icons-png.flaticon.com/512/2922/2922510.png' },
-    { id: 'KH003', name: 'Nha khoa Nụ Cười Việt', phone: '0334455667', email: 'nk.nucuoi@email.com', status: 'Inactive', plan: 'Cơ bản', registeredAt: '2024-06-15', trialEndDate: '2024-06-22', avatar: 'https://cdn-icons-png.flaticon.com/512/880/880530.png' },
-    { id: 'KH004', name: 'Phòng khám Thẩm mỹ ABC', phone: '0123456789', email: 'pk.abc@email.com', status: 'Active', plan: 'Nâng cao', registeredAt: '2025-07-10', trialEndDate: '2025-07-17', avatar: 'https://cdn-icons-png.flaticon.com/512/3077/3077421.png' },
+const { Text, Title } = Typography;
+// Sử dụng lại mockApiData đã định nghĩa ở trên để đảm bảo tính nhất quán
+// Trong dự án thực, bạn sẽ có một file riêng để quản lý các hàm gọi API
+const mockApiData = [
+    // ... (sao chép mockApiData từ file list vào đây)
+    {
+        id: 1, name: 'Phòng khám Răng-Hàm-Mặt Sài Gòn', phone: '0912345678', email: 'pk.saigon@email.com', avatar_url: 'https://cdn-icons-png.flaticon.com/512/33/33777.png', registered_at: '2025-07-20T10:00:00Z',
+        subscription: { id: 101, status: 'trialing', trial_ends_at: '2025-07-27T23:59:59Z', package: { name: 'Gói Cao Cấp' } }
+    },
+    {
+        id: 2, name: 'Nha khoa Quốc tế Á Âu', phone: '0987654321', email: 'nk.aau@email.com', avatar_url: 'https://cdn-icons-png.flaticon.com/512/2922/2922510.png', registered_at: '2025-07-18T09:00:00Z',
+        subscription: { id: 102, status: 'active', trial_ends_at: null, current_period_ends_at: '2025-08-18T23:59:59Z', package: { name: 'Gói Chuyên Nghiệp' } }
+    },
+    {
+        id: 3, name: 'Nha khoa Nụ Cười Việt', phone: '0334455667', email: 'nk.nucuoi@email.com', avatar_url: 'https://cdn-icons-png.flaticon.com/512/880/880530.png', registered_at: '2024-06-15T08:00:00Z',
+        subscription: { id: 103, status: 'canceled', trial_ends_at: '2024-06-22T23:59:59Z', current_period_ends_at: '2024-07-15T23:59:59Z', package: { name: 'Gói Khởi Đầu' } }
+    },
 ];
 
 const CustomerDetailPage = () => {
@@ -22,68 +30,71 @@ const CustomerDetailPage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // --- Logic tìm kiếm khách hàng ---
-        // Trong dự án thực tế, đây là nơi bạn gọi API: fetch(`/api/customers/${customerId}`)
-        const foundCustomer = allCustomers.find(c => c.id === customerId);
-        setCustomer(foundCustomer);
-        setLoading(false);
+        // --- MÔ PHỎNG GỌI API ĐỂ LẤY CHI TIẾT KHÁCH HÀNG ---
+        // GET /api/customers/{customerId}
+        setLoading(true);
+        setTimeout(() => {
+            const foundCustomer = mockApiData.find(c => c.id.toString() === customerId);
+            setCustomer(foundCustomer);
+            setLoading(false);
+        }, 500);
     }, [customerId]);
 
-    if (loading) {
-        return <Spin size="large" className="flex justify-center items-center h-full" />;
-    }
+    if (loading) return <Spin size="large" className="flex justify-center items-center h-full" />;
+    if (!customer) return <Title level={3}>Không tìm thấy khách hàng với ID: {customerId}</Title>;
 
-    if (!customer) {
-        return <Title level={3}>Không tìm thấy khách hàng với ID: {customerId}</Title>;
-    }
+    const { subscription } = customer;
+    const endDate = subscription.trial_ends_at || subscription.current_period_ends_at;
+
+    const statusMap = {
+        trialing: { color: 'processing', icon: <ClockCircleOutlined />, text: 'Dùng thử' },
+        active: { color: 'success', icon: <CheckCircleOutlined />, text: 'Hoạt động' },
+        canceled: { color: 'default', icon: <MinusCircleOutlined />, text: 'Đã hủy' },
+        past_due: { color: 'error', icon: <MinusCircleOutlined />, text: 'Quá hạn' },
+    };
+    const currentStatus = statusMap[subscription.status] || statusMap.canceled;
 
     return (
         <div className="space-y-6">
             <Title level={3}>Chi tiết Khách hàng: {customer.name}</Title>
             <Row gutter={[24, 24]}>
-                {/* --- CỘT THÔNG TIN CÁ NHÂN --- */}
                 <Col xs={24} md={12} lg={12}>
                     <Card>
                         <Space direction="vertical" align="center" className="w-full mb-6">
-                            <Avatar size={128} src={customer.avatar} icon={<UserOutlined />} />
+                            <Avatar size={128} src={customer.avatar_url} icon={<UserOutlined />} />
                             <Title level={4} className="mt-4 mb-0">{customer.name}</Title>
-                            <Text type="secondary">{customer.email}</Text>
+                            <Text type="secondary" copyable>{customer.email}</Text>
                         </Space>
                         <Descriptions bordered column={1} size="small">
                             <Descriptions.Item label={<Space><PhoneOutlined />Số điện thoại</Space>}>{customer.phone}</Descriptions.Item>
-                            <Descriptions.Item label="Gói dịch vụ"><Tag color="blue">{customer.plan}</Tag></Descriptions.Item>
+                            <Descriptions.Item label="Gói dịch vụ"><Tag color="blue">{subscription.package.name}</Tag></Descriptions.Item>
                             <Descriptions.Item label="Trạng thái">
-                                <Tag icon={customer.status === 'Active' ? <CheckCircleOutlined /> : <MinusCircleOutlined />} color={customer.status === 'Active' ? 'success' : 'default'}>
-                                    {customer.status === 'Active' ? 'Đang hoạt động' : 'Vô hiệu hóa'}
-                                </Tag>
+                                <Tag icon={currentStatus.icon} color={currentStatus.color}>{currentStatus.text}</Tag>
                             </Descriptions.Item>
-                            <Descriptions.Item label="Ngày đăng ký">{new Date(customer.registeredAt).toLocaleDateString('vi-VN')}</Descriptions.Item>
-                            <Descriptions.Item label="Kết thúc dùng thử">{new Date(customer.trialEndDate).toLocaleDateString('vi-VN')}</Descriptions.Item>
+                            <Descriptions.Item label="Ngày đăng ký">{new Date(customer.registered_at).toLocaleDateString('vi-VN')}</Descriptions.Item>
+                            <Descriptions.Item label={subscription.status === 'trialing' ? 'Kết thúc dùng thử' : 'Ngày gia hạn kế tiếp'}>
+                                {endDate ? new Date(endDate).toLocaleDateString('vi-VN') : 'N/A'}
+                            </Descriptions.Item>
                         </Descriptions>
                     </Card>
                 </Col>
 
-                {/* --- CỘT LỊCH SỬ HOẠT ĐỘNG --- */}
                 <Col xs={24} md={12} lg={12}>
                     <Card>
-                        <Title level={5}>Lịch sử Hoạt động</Title>
+                        <Title level={5}>Lịch sử Gói Đăng ký</Title>
                         <Timeline className="mt-6">
                             <Timeline.Item>
-                                <Text strong>Bắt đầu dùng thử</Text> - {new Date(customer.registeredAt).toLocaleDateString('vi-VN')}
-                                <p>Khách hàng đã đăng ký gói dùng thử: <Text strong>{customer.plan}</Text>.</p>
+                                <Text strong>Đăng ký tài khoản</Text> - {new Date(customer.registered_at).toLocaleDateString('vi-VN')}
+                                <p>Khách hàng đã đăng ký và bắt đầu gói: <Text strong>{subscription.package.name}</Text>.</p>
                             </Timeline.Item>
-                            <Timeline.Item color="gray">
-                                <Text strong>Gửi email chào mừng</Text> - {new Date(customer.registeredAt).toLocaleDateString('vi-VN')}
-                                <p>Hệ thống đã tự động gửi email hướng dẫn sử dụng.</p>
-                            </Timeline.Item>
-                            {customer.status === 'Inactive' && (
+                            {subscription.status === 'canceled' && (
                                 <Timeline.Item color="red" dot={<MinusCircleOutlined />}>
-                                    <Text strong>Tài khoản bị vô hiệu hóa</Text>
-                                    <p>Tài khoản đã bị quản trị viên vô hiệu hóa.</p>
+                                    <Text strong>Gói dịch vụ đã bị hủy</Text>
+                                    <p>Quản trị viên hoặc người dùng đã hủy gói dịch vụ.</p>
                                 </Timeline.Item>
                             )}
                             <Timeline.Item color="green" dot={<ClockCircleOutlined />}>
-                                <Text strong>Kết thúc dùng thử</Text> - {new Date(customer.trialEndDate).toLocaleDateString('vi-VN')}
+                                <Text strong>{subscription.status === 'trialing' ? 'Hết hạn dùng thử' : 'Ngày thanh toán tiếp theo'}</Text> - {endDate ? new Date(endDate).toLocaleDateString('vi-VN') : 'N/A'}
                             </Timeline.Item>
                         </Timeline>
                     </Card>

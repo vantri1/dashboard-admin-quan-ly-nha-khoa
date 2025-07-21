@@ -35,8 +35,11 @@ const findBreadcrumbItems = (path, menu) => {
     return items;
 };
 
-const renderMenuItems = (items) => {
+const renderMenuItems = (items, collapsed) => {
     return items.map((item) => {
+        if (collapsed && item.type === 'group') {
+            return null;
+        }
         if (item.type === 'divider') return { type: 'divider' };
         if (item.type === 'group') {
             return {
@@ -59,7 +62,7 @@ const renderMenuItems = (items) => {
             icon: item.icon,
             label: label,
         }
-    })
+    }).filter(Boolean);
 };
 
 const MainLayout = () => {
@@ -85,7 +88,7 @@ const MainLayout = () => {
         return parent ? [parent.key] : [];
     };
 
-    const memoizedMenuItems = useMemo(() => renderMenuItems(menuItems), []);
+    const memoizedMenuItems = useMemo(() => renderMenuItems(menuItems, collapsed), [collapsed]);
     const breadcrumbItems = useMemo(() => findBreadcrumbItems(location.pathname, menuItems), [location.pathname]);
 
     const menuContent = (

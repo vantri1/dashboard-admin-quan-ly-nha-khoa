@@ -38,9 +38,9 @@ const StaticPageListPage = () => {
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <Title level={3} className="m-0">Quản lý Trang tĩnh</Title>
-                <Link to="/pages/add">
+                {/* <Link to="/pages/add">
                     <Button type="primary" icon={<PlusOutlined />}>Thêm trang mới</Button>
-                </Link>
+                </Link> */}
             </div>
             <Card>
                 <Table

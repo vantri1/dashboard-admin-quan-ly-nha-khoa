@@ -92,7 +92,12 @@ const PricingListPage = () => {
     const fetchPackages = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await getPricingPackages(); // Lấy tất cả, không phân trang
+            const response = await getPricingPackages(
+                {
+                    sort_by: 'price_monthly',
+                    sort_order: 'esc',
+                }
+            );
             setPackages(response.data);
         } catch (error) {
             message.error(error.message || 'Có lỗi xảy ra, không thể tải dữ liệu.');
@@ -193,7 +198,37 @@ const PricingListPage = () => {
         { title: 'Tên gói', dataIndex: 'name', key: 'name', render: (text, record) => <Text strong>{text} {record.name === 'FREE TRIAL' ? <Tag color="success">Dùng thử</Tag> : (!!record.is_featured && <Tag color="gold">Nổi bật</Tag>)}</Text> },
         { title: 'Giá (VNĐ/tháng)', dataIndex: 'price_monthly', key: 'price_monthly', render: (price_monthly) => (parseFloat(price_monthly) === 0 ? <Text strong color="green">Miễn phí</Text> : parseFloat(price_monthly).toLocaleString('vi-VN')), sorter: (a, b) => a.price_monthly - b.price_monthly },
         { title: 'Trạng thái', dataIndex: 'is_active', key: 'is_active', render: (isActive) => <Tag color={isActive ? 'success' : 'default'}>{isActive ? 'Hoạt động' : 'Đang ẩn'}</Tag> },
+        { title: 'Người tạo', dataIndex: 'creator_name', key: 'creator_name', sorter: true },
         {
+            title: 'Ngày tạo',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            width: 180,
+            sorter: true,
+            // Định dạng lại ngày tháng cho dễ đọc, bao gồm cả giờ và phút
+            render: (text) => text ? new Date(text).toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-',
+        },
+        { title: 'Người sửa gần nhất', dataIndex: 'updater_name', key: 'updater_name', sorter: true },
+        {
+            title: 'Ngày sửa gần nhất',
+            dataIndex: 'updated_at',
+            key: 'updated_at',
+            width: 180,
+            sorter: true,
+            render: (text) => text ? new Date(text).toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-',
+        }, {
             title: 'Hành động', key: 'action', fixed: 'right',
             render: (_, record) => (
                 <Space>
@@ -237,7 +272,7 @@ const PricingListPage = () => {
                             columns={tableColumns}
                             dataSource={packages.filter(p => p.name !== 'FREE TRIAL')}
                             rowKey="id"
-                            scroll={{ x: 800 }}
+                            scroll={{ x: 1400 }}
                             bordered />
                     </Card>
                 )}
