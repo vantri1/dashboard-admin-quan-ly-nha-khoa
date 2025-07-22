@@ -56,16 +56,6 @@ const SiteSettingsPage = () => {
                                         <Input placeholder="support@example.com" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={12}>
-                                    <Form.Item name="allowRegister" label="Cho phép đăng ký dùng thử" valuePropName="checked">
-                                        <Switch />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={24}>
-                                    <Form.Item name="footerText" label="Nội dung Footer">
-                                        <Input.TextArea rows={3} placeholder="Bản quyền và thông tin cuối trang" />
-                                    </Form.Item>
-                                </Col>
                             </Row>
                         </Card>
                     </Tabs.TabPane>

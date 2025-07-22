@@ -58,7 +58,7 @@ const StaticPageForm = ({ onFinish, initialValues }) => {
                         <Form.Item
                             name="slug"
                             label="Đường dẫn (Slug)"
-                            rules={[{ required: true, message: 'Vui lòng nhập đường dẫn!' }]}
+                            // rules={[{ required: true, message: 'Vui lòng nhập đường dẫn!' }]}
                             help="Ví dụ: /chinh-sach-bao-mat"
                         >
                             <Input addonBefore="https://yourwebsite.com" placeholder="/dieu-khoan" />

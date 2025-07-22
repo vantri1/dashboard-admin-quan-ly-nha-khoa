@@ -1,94 +1,120 @@
-// src/pages/Accounts/AccountListPage.jsx
-import { CheckCircleOutlined, EditOutlined, ExclamationCircleFilled, MinusCircleOutlined, PlusOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
-import { Alert, Avatar, Button, Card, Input, message, Modal, Popconfirm, Space, Switch, Table, Tag, Typography } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { EditOutlined, ExclamationCircleFilled, PlusOutlined, UserOutlined } from '@ant-design/icons';
+import { Avatar, Button, Card, Input, message, Modal, Space, Switch, Table, Tag, Typography } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+
+import { deleteAccount, getAccounts, updateAccount } from '../../services/accountService';
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
 
-const initialData = [
-    { id: 1, fullName: 'Admin Master', email: 'admin@example.com', role: 'admin', status: true, avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png' },
-    { id: 2, fullName: 'BTV Anh Tuấn', email: 'editor.anh.tuan@example.com', role: 'editor', status: true, avatar: null },
-    { id: 3, fullName: 'Support Minh', email: 'support.minh@example.com', role: 'support', status: false, avatar: null },
-    { id: 4, fullName: 'Admin Phụ', email: 'admin.phu@example.com', role: 'admin', status: true, avatar: null },
-];
 
 const AccountListPage = () => {
-    const [users, setUsers] = useState(initialData);
-    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [searchTerm, setSearchTerm] = useState('');
+    const [sort, setSort] = useState({ field: 'id', order: 'desc' });
 
-    const handleStatusChange = (userId, newStatus) => {
-        setUsers(users.map(user => user.id === userId ? { ...user, status: newStatus } : user));
-        message.success("Cập nhật trạng thái thành công!");
+
+    const fetchApiData = useCallback(async (params) => {
+        setLoading(true);
+        try {
+            const response = await getAccounts(params);
+            setUsers(response.data.map(u => ({ ...u, status: u.status === 'active', key: u.id })));
+            setPagination({
+                current: response.pagination.page,
+                pageSize: response.pagination.limit,
+                total: response.pagination.total_records,
+            });
+        } catch (error) {
+            message.error(error || 'Không thể tải danh sách tài khoản.');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const params = {
+            page: pagination.current,
+            limit: pagination.pageSize,
+            search_term: searchTerm,
+            sort_by: sort.field,
+            sort_order: sort.order
+        };
+        fetchApiData(params);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fetchApiData, pagination.current, pagination.pageSize, searchTerm, sort]);
+
+    const handleStatusChange = async (userId, newStatus) => {
+        try {
+            const response = await updateAccount(userId, { status: newStatus ? 'active' : 'inactive' });
+            message.success(response.message || 'Cập nhật trạng thái thành công!');
+            setUsers(users.map(user => user.id === userId ? { ...user, status: newStatus } : user));
+        } catch (error) {
+            message.error(error || 'Cập nhật trạng thái thất bại.');
+        }
     };
 
-    const showBulkDeleteConfirm = () => {
+    const handleDelete = async (userId) => {
         confirm({
-            title: `Bạn có chắc muốn xóa ${selectedRowKeys.length} tài khoản đã chọn?`,
+            title: `Bạn có chắc muốn xóa tài khoản #${userId}?`,
             icon: <ExclamationCircleFilled />,
-            content: 'Tài khoản Admin không thể bị xóa bằng hành động này.',
+            content: 'Hành động này sẽ xóa mềm tài khoản.',
             okText: 'Xác nhận xóa',
             okType: 'danger',
             cancelText: 'Hủy',
-            onOk() {
-                // Lọc ra các tài khoản không phải là admin trước khi xóa
-                const deletableKeys = selectedRowKeys.filter(key => {
-                    const user = users.find(u => u.id === key);
-                    return user && user.role !== 'admin';
-                });
-
-                if (deletableKeys.length < selectedRowKeys.length) {
-                    message.warning('Một số tài khoản Quản trị viên (Admin) không thể bị xóa.');
+            onOk: async () => {
+                try {
+                    const response = await deleteAccount(userId);
+                    message.success(response.message || `Đã xóa tài khoản #${userId}.`);
+                    fetchApiData({
+                        page: pagination.current,
+                        limit: pagination.pageSize,
+                        search_term: searchTerm,
+                        sort_by: sort.field,
+                        sort_order: sort.order
+                    });
+                } catch (error) {
+                    message.error(error || `Xóa tài khoản #${userId} thất bại.`);
                 }
-
-                setUsers(users.filter(user => !deletableKeys.includes(user.id)));
-                setSelectedRowKeys([]);
-                message.success(`Đã xóa ${deletableKeys.length} tài khoản.`);
             },
         });
     };
 
-    const onSelectChange = (newSelectedRowKeys) => {
-        setSelectedRowKeys(newSelectedRowKeys);
+    const handleTableChange = (pagi, filters, sorter) => {
+        const newSort = sorter.field ? {
+            field: sorter.field,
+            order: sorter.order === 'ascend' ? 'asc' : 'desc',
+        } : { field: 'id', order: 'desc' };
+        setSort(newSort);
+        setPagination(p => ({ ...p, ...pagi }));
     };
 
-    const filteredUsers = useMemo(() => {
-        if (!searchTerm) return users;
-        const lowercasedTerm = searchTerm.toLowerCase();
-        return users.filter(user =>
-            user.fullName.toLowerCase().includes(lowercasedTerm) ||
-            user.email.toLowerCase().includes(lowercasedTerm)
-        );
-    }, [users, searchTerm]);
+    const handleSearch = (value) => {
+        setSearchTerm(value);
+        setPagination(p => ({ ...p, current: 1 }));
+    };
 
     const columns = [
-        { title: 'ID', dataIndex: 'id', key: 'id', sorter: (a, b) => a.id - b.id },
-        { title: 'Người dùng', dataIndex: 'fullName', key: 'fullName', sorter: (a, b) => a.fullName.localeCompare(b.fullName), render: (text, record) => <Space><Avatar src={record.avatar} icon={<UserOutlined />} /> <Text strong>{text}</Text></Space> },
-        { title: 'Email', dataIndex: 'email', key: 'email' },
+        { title: 'ID', dataIndex: 'id', key: 'id', sorter: true },
+        { title: 'Người dùng', dataIndex: 'full_name', key: 'full_name', sorter: true, render: (text, record) => <Space><Avatar src={record.avatar_url} icon={<UserOutlined />} /> <Text strong>{text}</Text></Space> },
+        { title: 'Email', dataIndex: 'email', key: 'email', sorter: true },
         {
-            title: 'Vai trò',
-            dataIndex: 'role',
-            key: 'role',
-            filters: [
-                { text: 'Admin', value: 'admin' },
-                { text: 'Editor', value: 'editor' },
-                { text: 'Support', value: 'support' },
-            ],
-            onFilter: (value, record) => record.role === value,
+            title: 'Vai trò', dataIndex: 'role', key: 'role', sorter: true,
             render: (role) => <Tag color={role === 'admin' ? 'red' : (role === 'editor' ? 'geekblue' : 'gold')}>{role.toUpperCase()}</Tag>
         },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (status, record) => <Switch checked={status} onChange={(checked) => handleStatusChange(record.id, checked)} /> },
         {
-            title: 'Hành động',
-            key: 'action',
-            render: (_, record) => <Link to={`/settings/users/edit/${record.id}`}><Button icon={<EditOutlined />}>Sửa</Button></Link>
+            title: 'Hành động', key: 'action',
+            render: (_, record) => (
+                <Space>
+                    <Link to={`/settings/users/edit/${record.id}`}><Button icon={<EditOutlined />}>Sửa</Button></Link>
+                    <Button type="primary" danger onClick={() => handleDelete(record.id)}>Xóa</Button>
+                </Space>
+            )
         },
     ];
-
-    const rowSelection = { selectedRowKeys, onChange: onSelectChange };
-    const hasSelected = selectedRowKeys.length > 0;
 
     return (
         <div className="space-y-4">
@@ -96,32 +122,21 @@ const AccountListPage = () => {
                 <Title level={3} className="m-0">Người dùng & Phân quyền</Title>
                 <Link to="/settings/users/add"><Button type="primary" icon={<PlusOutlined />}>Thêm Người dùng</Button></Link>
             </div>
-
             <Card>
-                <Input
-                    prefix={<SearchOutlined />}
+                {/* <Input.Search
                     placeholder="Tìm theo tên hoặc email..."
+                    onSearch={handleSearch}
+                    enterButton
+                    allowClear
                     className="w-full max-w-sm mb-4"
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-
-                {hasSelected && (
-                    <Alert
-                        message={
-                            <Space>
-                                <Text strong>Đã chọn {selectedRowKeys.length} mục</Text>
-                                <Button type="link" danger onClick={showBulkDeleteConfirm}>Xóa tất cả</Button>
-                            </Space>
-                        }
-                        type="info" showIcon className="mb-4"
-                    />
-                )}
-
+                /> */}
                 <Table
-                    rowSelection={rowSelection}
                     columns={columns}
-                    dataSource={filteredUsers}
+                    dataSource={users}
                     rowKey="id"
+                    pagination={pagination}
+                    loading={loading}
+                    onChange={handleTableChange}
                     bordered
                     scroll={{ x: 1000 }}
                 />

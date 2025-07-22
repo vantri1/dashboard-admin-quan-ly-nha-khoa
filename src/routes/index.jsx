@@ -1,4 +1,3 @@
-import { Typography } from 'antd';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import MainLayout from '../components/layout/MainLayout';
@@ -10,8 +9,11 @@ import LoginPage from '../pages/Auth/LoginPage';
 import CategoryGuideListPage from '../pages/Categories/CategoryGuideListPage';
 import CategoryPostListPage from '../pages/Categories/CategoryPostListPage';
 import CategoryProductListPage from '../pages/Categories/CategoryProductListPage';
+import ContactListPage from '../pages/Contacts/ContactListPage';
 import CustomerListPage from '../pages/Customers';
+import CustomerAddPage from '../pages/Customers/CustomerAddPage';
 import CustomerDetailPage from '../pages/Customers/CustomerDetailPage';
+import CustomerEditPage from '../pages/Customers/CustomerEditPage';
 import DashboardPage from '../pages/DashboardPage';
 import GuideAddPage from '../pages/Guides/GuideAddPage';
 import GuideEditPage from '../pages/Guides/GuideEditPage';
@@ -26,8 +28,8 @@ import ProductAddPage from '../pages/Products/ProductAddPage';
 import ProductEditPage from '../pages/Products/ProductEditPage';
 import SiteSettingsPage from '../pages/Settings/SiteSettingsPage';
 import StaticPageListPage from '../pages/StaticPages';
+import StaticPageAddPage from '../pages/StaticPages/StaticPageAddPage';
 import StaticPageEditPage from '../pages/StaticPages/StaticPageEditPage';
-const { Title } = Typography;
 
 // --- Tự động import các trang từ thư mục pages ---
 // (Tạm thời chúng ta sẽ dùng placeholder cho các trang chưa tạo)
@@ -81,9 +83,15 @@ export const router = createBrowserRouter([
             // { path: 'orders', element: <OrderListPage /> },
             // { path: 'orders/:orderId', element: <OrderDetailPage /> },
 
+            // Quản lý contact
+            { path: 'contacts', element: <ContactListPage /> },
+
             // Quản lý khách hàng
+
             { path: 'customers', element: <CustomerListPage /> },
             { path: 'customers/:customerId', element: <CustomerDetailPage /> },
+            { path: 'customers/add', element: <CustomerAddPage /> },
+            { path: 'customers/edit/:customerId', element: <CustomerEditPage /> },
 
             // // Quản lý đánh giá & bình luận
             // { path: 'reviews', element: <ReviewListPage /> },
@@ -106,6 +114,7 @@ export const router = createBrowserRouter([
 
             // Quản lý trang tĩnh
             { path: 'pages', element: <StaticPageListPage /> },
+            { path: 'pages/add', element: < StaticPageAddPage /> },
             { path: 'pages/edit/:pageId', element: <StaticPageEditPage /> },
 
 

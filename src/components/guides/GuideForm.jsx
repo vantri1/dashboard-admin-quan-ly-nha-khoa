@@ -50,7 +50,7 @@ const GuideForm = ({ onFinish, initialValues }) => {
                 setCategories(activeCategories);
             } catch (error) {
                 console.error('Failed to fetch categories:', error);
-                message.error('Không thể tải danh mục.');
+                message.error('Không thể tải danh mục: ' + error);
             } finally {
                 setLoadingCategories(false);
             }
@@ -103,7 +103,7 @@ const GuideForm = ({ onFinish, initialValues }) => {
             form.setFieldsValue({ category_id: newCategory.id });
             setIsCategoryModalVisible(false);
         } catch (error) {
-            message.error(`Thêm danh mục thất bại: ${error.message}`);
+            message.error(`Thêm danh mục thất bại: ${error}`);
         }
     };
 
@@ -121,7 +121,7 @@ const GuideForm = ({ onFinish, initialValues }) => {
                         finalImageUrl = uploadResponse.url;
                         message.success({ content: 'Tải ảnh lên thành công!', key: 'uploading' });
                     } catch (uploadError) {
-                        message.error({ content: 'Tải ảnh lên thất bại!', key: 'uploading' });
+                        message.error({ content: `Tải ảnh lên thất bại: ${uploadError}`, key: 'uploading' });
                         setIsSubmitting(false); // Dừng loading
                         return;
                     }

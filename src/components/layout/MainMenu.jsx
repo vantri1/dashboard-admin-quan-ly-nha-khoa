@@ -4,6 +4,7 @@ import {
     BookOutlined,
     DesktopOutlined,
     FileTextOutlined,
+    MailOutlined,
     QuestionCircleOutlined,
     SettingOutlined,
     TagOutlined,
@@ -30,6 +31,7 @@ export const menuItems = [
     // { key: '/orders', icon: <AppstoreOutlined />, label: 'Đơn hàng', isLink: true },
     // { key: '/transactions', icon: <DollarCircleOutlined />, label: 'Giao dịch', isLink: true },
     { key: '/customers', icon: <TeamOutlined />, label: 'Khách hàng', isLink: true },
+    { key: '/contacts', icon: <MailOutlined />, label: 'Liên hệ', isLink: true },
 
     { type: 'divider' },
     { key: 'group-content-pricing', type: 'group', label: (<span style={styleLabelGroup}>BẢNG GIÁ & NỘI DUNG</span>) },
