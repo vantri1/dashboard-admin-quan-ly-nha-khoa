@@ -69,10 +69,10 @@ const ContactListPage = () => {
     const handleDelete = async (id) => {
         try {
             const response = await deleteContact(id);
-            message.success(response.data.message || 'Đã xóa liên hệ thành công.');
+            message.success(response.message || 'Đã xóa liên hệ thành công.');
             fetchApiData({ page: pagination.current, limit: pagination.pageSize, ...filters, sort_by: sort.field, sort_order: sort.order });
         } catch (error) {
-            message.error(error.response?.data?.message || 'Không thể xóa liên hệ.');
+            message.error(error || 'Không thể xóa liên hệ.');
             console.error('Failed to delete contact:', error);
         }
     };

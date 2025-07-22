@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AccountAddPage from '../pages/Accounts/AccountAddPage';
 import AccountEditPage from '../pages/Accounts/AccountEditPage';
 import AccountListPage from '../pages/Accounts/AccountListPage';
+import ActivityLogPage from '../pages/ActivityLog/ActivityLogPage';
 import LoginPage from '../pages/Auth/LoginPage';
 import CategoryGuideListPage from '../pages/Categories/CategoryGuideListPage';
 import CategoryPostListPage from '../pages/Categories/CategoryPostListPage';
@@ -85,6 +86,9 @@ export const router = createBrowserRouter([
 
             // Quản lý contact
             { path: 'contacts', element: <ContactListPage /> },
+
+            // Nhật ký hoạt động
+            { path: 'activity-logs', element: <ActivityLogPage /> },
 
             // Quản lý khách hàng
 

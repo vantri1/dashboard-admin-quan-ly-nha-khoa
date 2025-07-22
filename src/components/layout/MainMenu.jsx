@@ -4,6 +4,7 @@ import {
     BookOutlined,
     DesktopOutlined,
     FileTextOutlined,
+    HistoryOutlined,
     MailOutlined,
     QuestionCircleOutlined,
     SettingOutlined,
@@ -89,7 +90,7 @@ export const menuItems = [
         children: [
             { key: '/settings/site', label: 'Cài đặt Website', icon: <DesktopOutlined />, isLink: true },
             { key: '/settings/users', label: 'Tài khoản quản trị', icon: <UsergroupAddOutlined />, isLink: true },
-            // { key: '/settings/general', label: 'Cài đặt chung', icon: <SettingOutlined />, isLink: true },
+            { key: '/activity-logs', label: 'Nhật ký hoạt động', icon: <HistoryOutlined />, isLink: true },
             // { key: '/settings/licenses', label: 'Quản lý giấy phép', icon: <FileProtectOutlined />, isLink: true },
             // { key: '/settings/payments', label: 'Cổng thanh toán', icon: <WalletOutlined />, isLink: true },
             // { key: '/settings/emails', label: 'Mẫu Email', icon: <MailOutlined />, isLink: true },

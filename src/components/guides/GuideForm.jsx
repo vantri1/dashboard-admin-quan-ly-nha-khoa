@@ -117,7 +117,7 @@ const GuideForm = ({ onFinish, initialValues }) => {
                 if (currentFile.originFileObj) {
                     message.loading({ content: 'Đang tải ảnh lên...', key: 'uploading' });
                     try {
-                        const uploadResponse = await uploadFileService(currentFile.originFileObj);
+                        const uploadResponse = await uploadFileService(currentFile.originFileObj, 'guides');
                         finalImageUrl = uploadResponse.url;
                         message.success({ content: 'Tải ảnh lên thành công!', key: 'uploading' });
                     } catch (uploadError) {
