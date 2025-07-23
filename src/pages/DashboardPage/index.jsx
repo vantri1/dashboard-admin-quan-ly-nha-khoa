@@ -58,7 +58,13 @@ const RecentTrials = ({ data }) => {
     return (
         <Card variant={false} className="shadow-sm">
             <Title level={5}>Đăng ký dùng thử gần nhất</Title>
-            <Table columns={columns} dataSource={data} pagination={false} rowKey="id" className="mt-4" />
+            <Table
+                columns={columns}
+                dataSource={data}
+                pagination={false}
+                rowKey="id"
+                scroll={{ x: 600 }}
+                className="mt-4" />
         </Card>
     );
 };
@@ -77,7 +83,7 @@ const DashboardPage = () => {
             const data = await getDashboardStats(period, year);
             setStats(data);
         } catch (error) {
-            message.error(error || 'Lỗi khi tải dữ liệu dashboard.');
+            message.error('Không thể tải danh sách trang: ' + error);
         } finally {
             setLoading(false);
         }

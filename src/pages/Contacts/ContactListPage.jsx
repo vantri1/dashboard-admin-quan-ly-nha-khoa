@@ -33,7 +33,7 @@ const ContactListPage = () => {
             }
         } catch (error) {
             // Xử lý lỗi và hiển thị thông báo ngay tại component
-            message.error('Không thể tải danh sách liên hệ.');
+            message.error('Không thể tải danh sách liên hệ. ' + error);
             console.error('Failed to fetch contacts:', error);
         } finally {
             setLoading(false);
