@@ -38,9 +38,10 @@ api.interceptors.response.use(
         if (error.response) {
             const status = error.response.status;
             const data = error.response.data || {};
+            const config = error.config;
 
             // SỬA ĐỔI 1: Ưu tiên xử lý lỗi 401 trước tiên
-            if (status === 401) {
+            if (status === 401 && config.url !== 'api/admin/login') {
                 // Xử lý dứt điểm tại đây và không chạy code bên dưới
                 localStorage.removeItem('admin_info');
                 localStorage.removeItem('admin_token');
