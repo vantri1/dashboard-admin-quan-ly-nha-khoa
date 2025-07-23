@@ -1,16 +1,24 @@
-// src/components/posts/GuideForm.jsx
+// src/components/guide/GuideForm.jsx
+
+import 'react-quill/dist/quill.snow.css';
+
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Col, DatePicker, Divider, Form, Input, message, Row, Select, Space, Typography, Upload } from 'antd';
 import dayjs from 'dayjs'; // Cần import dayjs
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import ReactQuill, { Quill } from 'react-quill'; // 1. Import Quill
 
 import { IMAGE_URL } from '../../constants/imageUrl'; // Đảm bảo import này đúng
 import { addCategory, getCategories } from '../../services/categoryService';
 import { uploadFileService } from '../../services/uploadFileService';
 import CategoryForm from '../categories/CategoryForm';
+
+// 3. Đăng ký module resize với Quill
+
 const { TextArea } = Input;
 const { Option } = Select;
 const { Text, Paragraph } = Typography;
+
 
 const GooglePreview = ({ title, slug, description }) => (
     <div className="font-sans">
@@ -89,6 +97,36 @@ const GuideForm = ({ onFinish, initialValues }) => {
         }
     }, [initialValues, form]);
 
+    // 4. Cấu hình modules cho Quill, thêm imageResize
+    const modules = useMemo(() => ({
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link', 'image', 'video'],
+            // Thêm các tùy chọn căn lề
+            [{ 'align': [] }],
+            ['clean']
+        ],
+        // Kích hoạt module resize ảnh
+        imageResize: {
+            parchment: Quill.import('parchment'),
+            modules: ['Resize', 'DisplaySize']
+        }
+    }), []);
+
+    /**
+     * Helper function: Chuyển đổi chuỗi base64 thành đối tượng File.
+     */
+    const dataURLtoFile = (dataurl, filename) => {
+        let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    }
+
     const handleAddCategory = async (values) => {
         try {
             const dataToSend = {
@@ -103,58 +141,64 @@ const GuideForm = ({ onFinish, initialValues }) => {
             form.setFieldsValue({ category_id: newCategory.id });
             setIsCategoryModalVisible(false);
         } catch (error) {
-            message.error(`Thêm danh mục thất bại: ${error}`);
+            message.error(`Thêm danh mục thất bại: ${error.message}`);
         }
     };
 
+    // 5. Cập nhật logic onFormFinish
     const onFormFinish = async (values) => {
         setIsSubmitting(true);
         try {
-            let finalImageUrl = null;
+            // --- XỬ LÝ ẢNH ĐẠI DIỆN ---
+            let featuredImageUrl = initialValues?.data?.featured_image_url || null;
             const currentFile = fileList.length > 0 ? fileList[0] : null;
+            if (currentFile && currentFile.originFileObj) {
+                const response = await uploadFileService(currentFile.originFileObj, 'guide');
+                featuredImageUrl = response.url;
+            }
 
-            if (currentFile) {
-                if (currentFile.originFileObj) {
-                    message.loading({ content: 'Đang tải ảnh lên...', key: 'uploading' });
-                    try {
-                        const uploadResponse = await uploadFileService(currentFile.originFileObj, 'guides');
-                        finalImageUrl = uploadResponse.url;
-                        message.success({ content: 'Tải ảnh lên thành công!', key: 'uploading' });
-                    } catch (uploadError) {
-                        message.error({ content: `Tải ảnh lên thất bại: ${uploadError}`, key: 'uploading' });
-                        setIsSubmitting(false); // Dừng loading
-                        return;
+            // --- XỬ LÝ ẢNH TRONG NỘI DUNG ---
+            let finalContent = values.content;
+            const imagesToUpload = Array.from(
+                new DOMParser().parseFromString(finalContent, 'text/html')
+                    .querySelectorAll('img[src^="data:"]')
+            );
+
+            if (imagesToUpload.length > 0) {
+                message.loading({ content: `Đang tải lên ${imagesToUpload.length} ảnh...`, key: 'content-images' });
+
+                // Tải lên tất cả các ảnh base64 song song
+                const uploadPromises = imagesToUpload.map(img => {
+                    const file = dataURLtoFile(img.src, `content_image_${Date.now()}.png`);
+                    return uploadFileService(file, 'guide');
+                });
+
+                const uploadResults = await Promise.all(uploadPromises);
+
+                // Thay thế các ảnh base64 bằng URL từ server
+                imagesToUpload.forEach((img, index) => {
+                    const result = uploadResults[index];
+                    if (result && result.url) {
+                        finalContent = finalContent.replace(img.src, `${IMAGE_URL}${result.url}`);
                     }
-                } else if (currentFile.url) {
-                    // [SỬA LỖI QUAN TRỌNG]
-                    // Chỉ lưu lại đường dẫn tương đối (relative path) vào DB.
-                    // URL trong fileList là URL đầy đủ (đã có IMAGE_URL),
-                    // ta cần loại bỏ phần IMAGE_URL trước khi lưu.
-                    if (currentFile.url.startsWith(IMAGE_URL)) {
-                        finalImageUrl = currentFile.url.replace(`${IMAGE_URL}/`, '');
-                    } else {
-                        // Fallback trong trường hợp URL không có cấu trúc như mong đợi
-                        // hoặc là một URL từ nguồn khác.
-                        // Nếu DB của bạn có thể chứa URL tuyệt đối từ các nguồn khác thì giữ nguyên.
-                        // Nếu không, bạn có thể coi đây là lỗi.
-                        finalImageUrl = initialValues?.data?.featured_image_url || null;
-                    }
-                }
+                });
+                message.success({ content: `Đã tải lên ${imagesToUpload.length} ảnh thành công!`, key: 'content-images' });
             }
 
             const finalValues = {
                 ...values,
-                featured_image_url: finalImageUrl,
+                featured_image_url: featuredImageUrl,
+                content: finalContent, // Gán nội dung HTML đã được cập nhật
                 post_type: 'guide',
-                admin_id: 1,
             };
 
             await onFinish(finalValues);
 
         } catch (error) {
             console.error('Form submission failed:', error);
+            message.error(error || "Đã có lỗi xảy ra khi lưu bài viết.");
         } finally {
-            setIsSubmitting(false); // Luôn dừng loading sau khi hoàn tất
+            setIsSubmitting(false);
         }
     };
 
@@ -170,7 +214,7 @@ const GuideForm = ({ onFinish, initialValues }) => {
                 {/* --- Cột trái: Nội dung chính --- */}
                 <Col span={24} lg={16}>
                     <Space direction="vertical" size="middle" className="w-full">
-                        <Card title="Nội dung bài viết" bordered={false} className="shadow-sm">
+                        <Card title="Nội dung bài viết" variant={false} className="shadow-sm">
                             <Form.Item name="title" label="Tiêu đề" rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài viết!' }]}>
                                 <Input placeholder="Ví dụ: Hướng dẫn sử dụng React Hook chi tiết" />
                             </Form.Item>
@@ -178,10 +222,16 @@ const GuideForm = ({ onFinish, initialValues }) => {
                                 <TextArea rows={3} placeholder="Mô tả ngắn gọn nội dung bài viết..." />
                             </Form.Item>
                             <Form.Item name="content" label="Nội dung chi tiết" rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}>
-                                <TextArea rows={15} placeholder="Soạn thảo nội dung bài viết tại đây..." />
+                                {/* 6. Sử dụng ReactQuill với modules đã cấu hình */}
+                                <ReactQuill
+                                    theme="snow"
+                                    modules={modules}
+                                    placeholder="Soạn thảo nội dung bài viết tại đây..."
+                                    style={{ height: '400px', marginBottom: '4rem' }}
+                                />
                             </Form.Item>
                         </Card>
-                        <Card title="Tối ưu hóa SEO (Tùy chọn)" bordered={false} className="shadow-sm">
+                        <Card title="Tối ưu hóa SEO (Tùy chọn)" variant={false} className="shadow-sm">
                             <Paragraph type="secondary">Xem trước cách bài viết của bạn sẽ hiển thị trên Google.</Paragraph>
                             <Card type="inner" className="mb-6">
                                 <GooglePreview
@@ -206,7 +256,7 @@ const GuideForm = ({ onFinish, initialValues }) => {
                 {/* --- Cột phải: Các tùy chọn --- */}
                 <Col span={24} lg={8}>
                     <Space direction="vertical" size="middle" className="w-full">
-                        <Card title="Tùy chọn đăng" bordered={false} className="shadow-sm">
+                        <Card title="Tùy chọn đăng" variant={false} className="shadow-sm">
                             <Form.Item name="status" label="Trạng thái">
                                 <Select>
                                     <Option value="published">Xuất bản</Option>
@@ -243,7 +293,7 @@ const GuideForm = ({ onFinish, initialValues }) => {
                                 </>
                             )}
                         </Card>
-                        <Card title="Danh mục" bordered={false} className="shadow-sm">
+                        <Card title="Danh mục" variant={false} className="shadow-sm">
                             <Form.Item name="category_id" label="Danh mục" rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}>
                                 <Select
                                     placeholder="Chọn một danh mục"
@@ -264,7 +314,7 @@ const GuideForm = ({ onFinish, initialValues }) => {
                                 </Select>
                             </Form.Item>
                         </Card>
-                        <Card title="Ảnh đại diện" bordered={false} className="shadow-sm">
+                        <Card title="Ảnh đại diện" variant={false} className="shadow-sm">
                             <Upload
                                 listType="picture-card"
                                 fileList={fileList}

@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8008';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Tạo một instance Axios
 const api = axios.create({
@@ -30,72 +30,39 @@ api.interceptors.request.use(
 // Thêm interceptor để xử lý lỗi phản hồi
 api.interceptors.response.use(
     (response) => {
-        // ================== SỬA LỖI TẠI ĐÂY ==================
-        // Với các request thành công (status 2xx), trả về thẳng `response.data`
-        // `response.data` chính là object mà PHP backend đã `json_encode`
+        // Với các request thành công, trả về thẳng data
         return response.data;
-        // ======================================================
     },
     (error) => {
-        // Phần xử lý lỗi của bạn đã rất tốt, giữ nguyên và cải tiến một chút
-        let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại.';
-
+        // --- PHIÊN BẢN SỬA LỖI ---
         if (error.response) {
-            // Lỗi từ server (status code không phải 2xx)
-            // Ưu tiên lấy trường `message` từ trong body của lỗi
-            if (error.response.data && error.response.data.message) {
-                errorMessage = error.response.data.message;
-            } else if (error.response.status === 401) {
-                errorMessage = 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
-                // Ở đây bạn có thể thêm logic để tự động đăng xuất
-                // localStorage.removeItem('authToken');
-                // window.location.href = '/login';
+            const status = error.response.status;
+            const data = error.response.data || {};
+
+            // SỬA ĐỔI 1: Ưu tiên xử lý lỗi 401 trước tiên
+            if (status === 401) {
+                // Xử lý dứt điểm tại đây và không chạy code bên dưới
+                localStorage.removeItem('admin_info');
+                localStorage.removeItem('admin_token');
+                window.location.href = '/login';
+
+                // SỬA ĐỔI 2: Ngăn không cho promise tiếp tục bị reject, tránh các .catch() khác chạy gây ra lỗi không mong muốn
+                return new Promise(() => { });
             }
+
+            // Nếu không phải lỗi 401, thì lấy message lỗi theo thứ tự ưu tiên
+            const errorMessage = data.message || error.message || 'Có lỗi xảy ra, vui lòng thử lại.';
+            return Promise.reject(new Error(errorMessage));
+
         } else if (error.request) {
-            // Lỗi mạng hoặc không nhận được phản hồi
-            errorMessage = 'Không thể kết nối tới máy chủ.';
+            // Lỗi mạng
+            const networkError = new Error('Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại kết nối mạng.');
+            return Promise.reject(networkError);
         } else {
             // Các lỗi khác
-            errorMessage = error.message;
+            return Promise.reject(error);
         }
-
-        // `Promise.reject` với một đối tượng Error mới chứa thông điệp đã được làm sạch.
-        return Promise.reject(new Error(errorMessage));
     }
-    // (error) => {
-    // if (error.response) {
-    //     const { status, data } = error.response;
-    //     let errorMessage = data.message || 'Có lỗi xảy ra từ server.';
-
-    //     switch (status) {
-    //         case 400:
-    //             message.error(`Lỗi dữ liệu: ${errorMessage}`);
-    //             break;
-    //         case 401:
-    //             message.error(`Không xác thực: ${errorMessage}`);
-    //             // Có thể chuyển hướng về trang đăng nhập nếu token hết hạn
-    //             // window.location.href = '/login';
-    //             break;
-    //         case 403:
-    //             message.error(`Không có quyền: ${errorMessage}`);
-    //             break;
-    //         case 404:
-    //             message.error(`Không tìm thấy tài nguyên: ${errorMessage}`);
-    //             break;
-    //         case 409:
-    //             message.error(`Xung đột dữ liệu: ${errorMessage}`);
-    //             break;
-    //         case 500:
-    //             message.error(`Lỗi server nội bộ: ${errorMessage}`);
-    //             break;
-    //         default:
-    //             message.error(`Lỗi: ${errorMessage} (Mã: ${status})`);
-    //     }
-    // } else if (error.request) {
-    //     message.error('Không có phản hồi từ server. Vui lòng kiểm tra kết nối mạng.');
-    // } else {
-    //     message.error(`Lỗi yêu cầu: ${error.message}`);
-    // }
 );
 
 export default api;

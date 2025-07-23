@@ -48,7 +48,7 @@ const CategoryGuideListPage = () => {
                 total: result.pagination.total_records,
             });
         } catch (error) {
-            message.error(`Lỗi tải danh mục: ${error.message}`);
+            message.error(`Lỗi tải danh mục: ${error}`);
         } finally {
             setLoading(false);
         }
@@ -104,7 +104,7 @@ const CategoryGuideListPage = () => {
             fetchCategories(queryParams);
             handleCancel();
         } catch (error) {
-            message.error(`Thao tác thất bại: ${error.message}`);
+            message.error(`Thao tác thất bại: ${error}`);
         } finally {
             setLoading(false);
         }
@@ -122,7 +122,7 @@ const CategoryGuideListPage = () => {
                     // Tải lại dữ liệu sau khi thành công
                     fetchCategories(queryParams);
                 } catch (error) {
-                    message.error(`Lỗi khi xóa: ${error.message}`);
+                    message.error(`Lỗi khi xóa: ${error}`);
                 }
             },
         });
@@ -141,7 +141,7 @@ const CategoryGuideListPage = () => {
                     // Tải lại dữ liệu sau khi thành công
                     setQueryParams({ ...queryParams, page: 1 }); // Quay về trang 1
                 } catch (error) {
-                    message.error(`Lỗi khi xóa hàng loạt: ${error.message}`);
+                    message.error(`Lỗi khi xóa hàng loạt: ${error}`);
                 }
             },
         });

@@ -1,1 +1,1 @@
-export const IMAGE_URL = 'http://localhost:8008'
+export const IMAGE_URL = import.meta.env.VITE_IMAGE_URL

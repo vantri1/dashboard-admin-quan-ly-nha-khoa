@@ -4,9 +4,14 @@ import 'antd/dist/reset.css';
 import './index.css';
 
 import { ConfigProvider } from 'antd';
+import ImageResize from 'quill-image-resize-module-react';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Quill } from 'react-quill';
 import { BrowserRouter } from 'react-router-dom';
+
+// Đăng ký module một lần duy nhất cho toàn bộ ứng dụng
+Quill.register('modules/imageResize', ImageResize);
 
 import App from './App';
 import { themeColors } from './configs/theme';

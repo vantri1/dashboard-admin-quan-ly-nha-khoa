@@ -100,7 +100,7 @@ const PricingListPage = () => {
             );
             setPackages(response.data);
         } catch (error) {
-            message.error(error.message || 'Có lỗi xảy ra, không thể tải dữ liệu.');
+            message.error(error || 'Có lỗi xảy ra, không thể tải dữ liệu.');
         } finally {
             setLoading(false);
         }
@@ -147,7 +147,7 @@ const PricingListPage = () => {
             await fetchPackages(); // Tải lại dữ liệu sau khi thành công
             handleCancel();
         } catch (error) {
-            message.error(error.message || 'Thao tác thất bại.');
+            message.error(error || 'Thao tác thất bại.');
         } finally {
             setLoading(false);
         }
@@ -159,7 +159,7 @@ const PricingListPage = () => {
             message.success('Đã xóa gói giá!');
             await fetchPackages(); // Tải lại dữ liệu
         } catch (error) {
-            message.error(error.message || 'Xóa thất bại.');
+            message.error(error || 'Xóa thất bại.');
         }
     };
 
@@ -172,7 +172,7 @@ const PricingListPage = () => {
             setSelectedRowKeys([]);
             await fetchPackages(); // Tải lại dữ liệu
         } catch (error) {
-            message.error(error.message || `Có lỗi khi xóa các gói giá.`);
+            message.error(error || `Có lỗi khi xóa các gói giá.`);
         } finally {
             setLoading(false);
         }

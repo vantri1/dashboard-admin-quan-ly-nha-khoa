@@ -82,7 +82,7 @@ export const menuItems = [
     { key: 'group-system', type: 'group', label: (<span style={styleLabelGroup}>HỆ THỐNG</span>) },
 
     // { key: '/support', icon: <QuestionCircleOutlined />, label: 'Hỗ trợ khách hàng', isLink: true },
-    { key: '/reports', icon: <AreaChartOutlined />, label: 'Báo cáo', isLink: true },
+    // { key: '/reports', icon: <AreaChartOutlined />, label: 'Báo cáo', isLink: true },
     {
         key: 'sub_settings',
         icon: <SettingOutlined />,

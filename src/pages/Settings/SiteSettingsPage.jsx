@@ -86,7 +86,7 @@ const SiteSettingsPage = () => {
             message.success(updateResponse.message || 'Cập nhật cài đặt thành công!');
 
         } catch (error) {
-            const errorMessage = error || error.message || 'Lưu cài đặt thất bại.';
+            const errorMessage = error || error || 'Lưu cài đặt thất bại.';
             message.error(errorMessage);
         } finally {
             setIsSaving(false);

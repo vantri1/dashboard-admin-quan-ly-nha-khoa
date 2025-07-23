@@ -29,7 +29,7 @@ const AppHeader = ({ collapsed, setCollapsed, breadcrumbs }) => {
     // Thêm prop "breadcrumbs"
     const [isFullscreen, setIsFullscreen] = useState(false);
     const isMobile = useMediaQuery('(max-width: 768px)');
-    const { logout } = useAuth();
+    const { logout, adminInfo } = useAuth();
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -108,9 +108,9 @@ const AppHeader = ({ collapsed, setCollapsed, breadcrumbs }) => {
                     />
                 )}
 
-                <Badge count={4}>
+                {/* <Badge count={4}>
                     <Button type="text" shape="circle" icon={<BellOutlined />} />
-                </Badge>
+                </Badge> */}
                 <Dropdown menu={{ items: userMenu }} placement="bottomRight" trigger={['click']}>
                     {/* Sử dụng Button làm trigger. onClick của Button sẽ bị ghi đè bởi Dropdown */}
                     <Button
@@ -123,7 +123,7 @@ const AppHeader = ({ collapsed, setCollapsed, breadcrumbs }) => {
                             <Avatar
                                 src="https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png"
                             />
-                            <Text>Admin</Text>
+                            <Text>{adminInfo?.full_name || 'Admin'}</Text>
                         </Space>
                     </Button>
                 </Dropdown>

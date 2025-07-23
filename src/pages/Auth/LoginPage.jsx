@@ -39,7 +39,7 @@ const LoginPage = () => {
         } catch (error) {
             console.error('Login error:', error);
             if (error) {
-                message.error(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+                message.error(error || 'Đăng nhập thất bại. Vui lòng thử lại.');
             } else if (error.request) {
                 message.error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
             } else {
